@@ -1,0 +1,1104 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lab Penjaminan Mutu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<style>
+/* Layout: lab notebook — week rail on the left, one lab sheet per week on the right (concept → bench → test run); rail becomes a tab strip on phones */
+:root{
+  --bg:#EDF0EB; --surface:#FFFFFF; --sunk:#E2E7E0; --ink:#16201B; --muted:#56635C; --line:#CAD3C9; --grid:rgba(36,67,201,.055);
+  --accent:#2443C9; --accent-ink:#FFFFFF; --accent-soft:#DDE4FB;
+  --pass:#1C7C45; --pass-soft:#D5ECDD; --fail:#BA3826; --fail-soft:#F5DBD5; --warn:#9C6410; --warn-soft:#F3E5C9;
+  --f-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1412; --surface:#161D1A; --sunk:#1E2723; --ink:#E3EAE5; --muted:#94A29A; --line:#2C3833; --grid:rgba(143,163,255,.05);
+  --accent:#8FA3FF; --accent-ink:#0F1412; --accent-soft:#222B52;
+  --pass:#55C686; --pass-soft:#163122; --fail:#F2725E; --fail-soft:#3C1C16; --warn:#E2A94F; --warn-soft:#382A13; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1412; --surface:#161D1A; --sunk:#1E2723; --ink:#E3EAE5; --muted:#94A29A; --line:#2C3833; --grid:rgba(143,163,255,.05);
+  --accent:#8FA3FF; --accent-ink:#0F1412; --accent-soft:#222B52;
+  --pass:#55C686; --pass-soft:#163122; --fail:#F2725E; --fail-soft:#3C1C16; --warn:#E2A94F; --warn-soft:#382A13; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:16px/1.6 var(--f-body);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:clamp(1.9rem,4.2vw,2.8rem);font-weight:700;letter-spacing:-.01em}
+h2{font-size:1.45rem;font-weight:700}
+h3{font-size:1.1rem;font-weight:500}
+p{margin:0}
+code,.mono{font-family:var(--f-mono)}
+code{font-size:.88em;background:var(--sunk);padding:.08em .35em;border-radius:4px}
+.mono{font-size:.74rem;letter-spacing:.06em;text-transform:uppercase}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* header */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--surface);border-bottom:1px solid var(--line)}
+.top-in{max-width:1200px;margin:0 auto;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;align-items:center;gap:16px;justify-content:space-between}
+.brand{display:flex;align-items:baseline;gap:10px;text-decoration:none;color:inherit;background:none;border:0;padding:0}
+.brand b{font-family:var(--f-display);font-size:1.15rem}
+.brand .mono{color:var(--muted)}
+.suite{display:flex;align-items:center;gap:10px;font-family:var(--f-mono);font-size:.78rem;color:var(--muted)}
+.suite-bar{display:flex;gap:3px}
+.suite-bar i{width:14px;height:8px;border-radius:2px;background:var(--sunk);border:1px solid var(--line)}
+.suite-bar i.ok{background:var(--pass);border-color:var(--pass)}
+.suite-bar i.try{background:var(--warn);border-color:var(--warn)}
+
+/* frame */
+.frame{max-width:1200px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;grid-template-columns:230px minmax(0,1fr);gap:36px}
+.rail{position:sticky;top:calc(env(safe-area-inset-top,0px) + 76px);align-self:start;display:flex;flex-direction:column;gap:2px}
+.rail .mono{color:var(--muted);padding:0 10px 8px}
+.rail button{display:grid;grid-template-columns:34px 1fr auto;gap:6px;align-items:center;text-align:left;background:none;border:1px solid transparent;border-radius:8px;padding:8px 10px;font-size:.92rem;line-height:1.3}
+.rail button:hover{background:var(--surface);border-color:var(--line)}
+.rail button[aria-current="page"]{background:var(--accent);color:var(--accent-ink)}
+.rail button .wk{font-family:var(--f-mono);font-size:.75rem;opacity:.8}
+.rail .dot{width:8px;height:8px;border-radius:50%;background:transparent}
+.rail .dot.ok{background:var(--pass)} .rail .dot.try{background:var(--warn)}
+main{min-width:0}
+
+@media (max-width:860px){
+  .frame{grid-template-columns:minmax(0,1fr);gap:20px;padding-block:16px 48px}
+  .rail{position:static;flex-direction:row;overflow-x:auto;gap:6px;padding-bottom:4px;margin-inline:-4px}
+  .rail .mono{display:none}
+  .rail button{grid-template-columns:auto auto;white-space:nowrap;border-color:var(--line);background:var(--surface)}
+  .rail button .ttl{display:none} .rail .dot{display:none}
+  .suite .lbl{display:none}
+}
+
+/* week sheet */
+.week{display:flex;flex-direction:column;gap:40px}
+.week-head{display:flex;flex-direction:column;gap:12px;max-width:68ch}
+.eyebrow{font-family:var(--f-mono);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.lede{font-size:1.1rem;color:var(--muted)}
+.sec{display:flex;flex-direction:column;gap:18px}
+.sec-h{display:flex;align-items:baseline;gap:12px;border-bottom:1px solid var(--line);padding-bottom:8px}
+.sec-h .mono{color:var(--muted)}
+.concept{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:18px 28px}
+.concept .blk{display:flex;flex-direction:column;gap:8px;min-width:0}
+.concept .blk.wide{grid-column:1/-1}
+.concept h3{font-weight:700;font-size:1.05rem}
+.concept ul,.concept ol{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:4px}
+.concept p,.concept li{max-width:68ch}
+.term{border-left:3px solid var(--accent);padding:4px 0 4px 12px}
+.term b{font-family:var(--f-display)}
+.formula{font-family:var(--f-mono);font-size:.9rem;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;overflow-x:auto;white-space:pre;line-height:1.7}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+th,td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500;background:var(--sunk)}
+tr:last-child td{border-bottom:0}
+
+/* bench */
+.benches{display:flex;flex-direction:column;gap:22px}
+.bench{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.bench-head{display:flex;flex-direction:column;gap:4px;padding:14px 18px;border-bottom:1px dashed var(--line)}
+.bench-head .mono{color:var(--accent)}
+.bench-head p{color:var(--muted);font-size:.92rem}
+.bench-body{padding:18px;display:flex;flex-direction:column;gap:16px;min-width:0}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}
+.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:700px){.split{grid-template-columns:minmax(0,1fr)}}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 14px;font-weight:500;font-size:.92rem}
+.btn:hover{border-color:var(--accent)}
+.btn.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.chip{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:4px 12px;font-size:.88rem}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.panel{background:var(--sunk);border-radius:8px;padding:12px 14px;font-size:.95rem;min-height:3.2em}
+.panel b{font-family:var(--f-display)}
+input[type=number]{font:inherit;width:6.5em;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
+input[type=range]{accent-color:var(--accent);width:min(260px,100%)}
+input[type=checkbox]{accent-color:var(--accent);width:18px;height:18px}
+label{font-size:.92rem;display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pill{display:inline-block;font-family:var(--f-mono);font-size:.72rem;letter-spacing:.05em;text-transform:uppercase;padding:2px 8px;border-radius:4px}
+.pill.pass{background:var(--pass-soft);color:var(--pass)} .pill.fail{background:var(--fail-soft);color:var(--fail)} .pill.warn{background:var(--warn-soft);color:var(--warn)} .pill.idle{background:var(--sunk);color:var(--muted)}
+svg text{fill:var(--ink);font-family:var(--f-body)}
+.svgbox{width:100%;max-width:100%;height:auto;display:block}
+
+/* code block */
+pre.code{margin:0;font:14px/1.7 var(--f-mono);background:var(--sunk);border-radius:8px;padding:12px 14px;overflow-x:auto}
+pre.code .ln{color:var(--muted);display:inline-block;width:2em;user-select:none}
+pre.code .bad{background:var(--fail-soft);color:var(--fail);border-radius:3px;padding:0 2px}
+pre.code .hl{background:var(--accent-soft);border-radius:3px}
+
+/* error → fault → failure */
+.stages{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;position:relative}
+@media (max-width:640px){.stages{grid-template-columns:minmax(0,1fr)}}
+.stage{border:1px solid var(--line);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:4px;background:var(--bg);transition:background .35s,border-color .35s,transform .35s}
+.stage .mono{color:var(--muted)}
+.stage p{font-size:.9rem;color:var(--muted)}
+.stage.lit{border-color:var(--warn);background:var(--warn-soft)}
+.stage.lit.fail{border-color:var(--fail);background:var(--fail-soft);animation:shake .4s}
+.stage.lit.pass{border-color:var(--pass);background:var(--pass-soft)}
+@keyframes shake{25%{transform:translateX(-4px)}50%{transform:translateX(4px)}75%{transform:translateX(-2px)}}
+
+/* sorter */
+.sort-list{display:flex;flex-direction:column;gap:8px}
+.sort-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);transition:background .25s,border-color .25s}
+.sort-row.ok{background:var(--pass-soft);border-color:var(--pass)}
+.sort-row.no{background:var(--fail-soft);border-color:var(--fail)}
+.sort-row .why{grid-column:1/-1;font-size:.86rem;color:var(--muted)}
+.sort-row .bk{display:flex;gap:6px}
+.sort-row .bk button{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:3px 10px;font-family:var(--f-mono);font-size:.78rem}
+.sort-row .bk button.pick{background:var(--ink);color:var(--bg)}
+
+/* PDCA */
+.pdca-seg{cursor:pointer;transition:opacity .25s}
+.pdca-seg path{stroke:var(--surface);stroke-width:2}
+.spin{transform-origin:110px 110px;animation:spin 14s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* stairs */
+.stairs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:end;gap:6px;height:190px}
+.stairs button{border:1px solid var(--line);background:var(--bg);border-radius:6px 6px 0 0;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;padding:8px 4px;gap:2px;transition:background .3s,color .3s}
+.stairs button b{font-family:var(--f-display);font-size:1.3rem}
+.stairs button span{font-size:.72rem;font-family:var(--f-mono);text-transform:uppercase;letter-spacing:.04em}
+.stairs button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.stairs button.past{background:var(--accent-soft)}
+
+/* tiles */
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,190px),1fr));gap:10px}
+.tile{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:12px;text-align:left;display:flex;flex-direction:column;gap:4px;min-height:84px}
+.tile .mono{color:var(--muted)}
+.tile b{font-family:var(--f-display);font-weight:500;line-height:1.25}
+.tile[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.lifebar{display:grid;grid-template-columns:1fr 2fr 2fr;gap:4px}
+.lifebar div{padding:10px;border-radius:6px;background:var(--sunk);font-size:.85rem;text-align:center;transition:background .35s,color .35s}
+.lifebar div.on{background:var(--accent);color:var(--accent-ink)}
+
+/* checklist */
+.checks{display:flex;flex-direction:column;gap:6px}
+.checks label{display:flex;gap:10px;align-items:flex-start;padding:6px 8px;border-radius:6px;flex-wrap:nowrap}
+.checks label:hover{background:var(--sunk)}
+.stagebox{border:1px solid var(--line);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:10px;transition:opacity .3s}
+.stagebox.locked{opacity:.45;pointer-events:none}
+.prog{height:8px;background:var(--sunk);border-radius:4px;overflow:hidden}
+.prog i{display:block;height:100%;background:var(--accent);width:0;transition:width .35s}
+.gate{font-family:var(--f-mono);font-size:.82rem;padding:8px 10px;border-radius:6px;background:var(--sunk);color:var(--muted)}
+.gate.open{background:var(--pass-soft);color:var(--pass)}
+
+/* round table */
+.table-wrap{position:relative;width:min(340px,100%);aspect-ratio:1;margin-inline:auto}
+.table-wrap .tbl{position:absolute;inset:26%;border-radius:50%;background:var(--sunk);border:1px dashed var(--line);display:grid;place-items:center;text-align:center;font-family:var(--f-mono);font-size:.72rem;color:var(--muted);padding:10px}
+.seat{position:absolute;transform:translate(-50%,-50%);border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 10px;font-size:.78rem;white-space:nowrap;transition:background .2s}
+.seat[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+
+/* stepper */
+.stepper{display:flex;flex-direction:column;gap:14px}
+.track{position:relative;display:grid;gap:4px}
+.track::before{content:"";position:absolute;left:4%;right:4%;top:17px;height:2px;background:var(--line)}
+.track .fill{position:absolute;left:4%;top:17px;height:2px;background:var(--accent);transition:width .45s}
+.track button{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:0;padding:0;font-size:.74rem;text-align:center;line-height:1.25;min-width:0}
+.track button i{width:34px;height:34px;border-radius:50%;border:2px solid var(--line);background:var(--surface);display:grid;place-items:center;font-style:normal;font-family:var(--f-mono);font-size:.8rem;transition:background .3s,border-color .3s,transform .3s}
+.track button.done i{border-color:var(--accent);background:var(--accent-soft)}
+.track button.cur i{border-color:var(--accent);background:var(--accent);color:var(--accent-ink);transform:scale(1.12)}
+@media (max-width:640px){.track button span{display:none}}
+
+/* graph */
+.graph .edge{fill:none;stroke:var(--line);stroke-width:2.2;transition:stroke .3s}
+.graph .edge.hit{stroke:var(--accent)}
+.graph .edge.now{stroke:var(--warn);stroke-width:3}
+.graph .node circle{fill:var(--surface);stroke:var(--muted);stroke-width:1.6;transition:fill .3s,stroke .3s}
+.graph .node.hit circle{fill:var(--accent-soft);stroke:var(--accent)}
+.graph .node.cur circle{fill:var(--accent);stroke:var(--accent)}
+.graph .node.cur text.id{fill:var(--accent-ink)}
+.graph .node text.id{font-family:var(--f-mono);font-size:12px;font-weight:600;text-anchor:middle;dominant-baseline:central}
+.graph .node text.cap{font-size:10.5px;fill:var(--muted)}
+.graph .elab{font-family:var(--f-mono);font-size:10px;fill:var(--muted)}
+.graph .token{fill:var(--warn);opacity:0;transition:opacity .2s}
+.graph .token.on{opacity:1}
+.meter{display:flex;flex-direction:column;gap:4px;font-size:.88rem}
+.meter .bar{height:10px;border-radius:5px;background:var(--sunk);overflow:hidden}
+.meter .bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .45s}
+.meter .bar i.full{background:var(--pass)}
+.log{font-family:var(--f-mono);font-size:.8rem;display:flex;flex-direction:column;gap:4px;max-height:150px;overflow:auto}
+.log div{padding:4px 8px;background:var(--sunk);border-radius:4px}
+
+/* number line */
+.nl-zone{transition:width .3s,x .3s}
+.zone-ok{fill:var(--pass-soft)} .zone-bad{fill:var(--fail-soft)}
+.nl-axis{stroke:var(--muted);stroke-width:1.5}
+.nl-tick{stroke:var(--muted)}
+.nl-lab{font-family:var(--f-mono);font-size:11px;text-anchor:middle}
+.nl-dot{fill:var(--accent);transition:cx .3s}
+.bva-pt.ok{fill:var(--pass)} .bva-pt.bad{fill:var(--fail)}
+.zoom2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:560px){.zoom2{grid-template-columns:1fr}}
+.zoom2>div{display:flex;flex-direction:column;gap:4px}
+.zoom2 .mono{color:var(--muted)}
+
+/* matrix / lcom */
+.lcom td,.lcom th{text-align:center}
+.lcom td:first-child,.lcom th:first-child{text-align:left}
+.dt td.on,.dt th.on{background:var(--accent-soft)}
+.toggle{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.toggle button{border:0;background:var(--surface);padding:5px 12px;font-size:.88rem}
+.toggle button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+
+/* traceability */
+.trace{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 34px;position:relative}
+.trace .col{display:flex;flex-direction:column;gap:8px;position:relative;z-index:1}
+.trace .col .mono{color:var(--muted)}
+.trace button{border:1px solid var(--line);background:var(--bg);border-radius:6px;padding:6px 8px;text-align:left;font-size:.85rem;line-height:1.3;transition:background .25s,border-color .25s,opacity .25s}
+.trace button b{font-family:var(--f-mono);font-size:.78rem}
+.trace.focus button{opacity:.35}
+.trace.focus button.on{opacity:1;border-color:var(--accent);background:var(--accent-soft)}
+.trace button.gap{border-style:dashed;border-color:var(--fail)}
+.trace svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+.trace svg path{fill:none;stroke:var(--line);stroke-width:1.5;transition:stroke .25s,opacity .25s}
+.trace.focus svg path{opacity:.2}
+.trace.focus svg path.on{stroke:var(--accent);stroke-width:2.4;opacity:1}
+
+/* formality */
+.form-meters{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;align-items:center;font-size:.9rem}
+.pips{display:flex;gap:4px}
+.pips i{width:28px;height:10px;border-radius:3px;background:var(--sunk);transition:background .3s}
+.pips i.on{background:var(--accent)}
+
+/* quiz runner */
+.runner{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.runner-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 18px;background:var(--ink);color:var(--bg)}
+.runner-head .mono{color:inherit}
+.tc{padding:18px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.tc-top{display:flex;gap:10px;align-items:center;justify-content:space-between}
+.tc-id{color:var(--muted)}
+.tc-q{font-weight:500;max-width:70ch}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:8px}
+.opt{display:flex;gap:10px;align-items:flex-start;text-align:left;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:9px 12px;font-size:.93rem;line-height:1.4;transition:background .2s,border-color .2s}
+.opt:hover:not(:disabled){border-color:var(--accent)}
+.opt .mono{color:var(--muted);padding-top:2px}
+.opt.right{background:var(--pass-soft);border-color:var(--pass)}
+.opt.wrong{background:var(--fail-soft);border-color:var(--fail)}
+.opt:disabled{cursor:default}
+.tc-why{font-size:.9rem;color:var(--muted);border-left:3px solid var(--line);padding-left:10px}
+.summary{padding:18px;display:flex;flex-direction:column;gap:12px}
+.summary .big{font-family:var(--f-display);font-size:1.6rem;font-weight:700}
+.sumbar{display:flex;gap:4px}
+.sumbar i{flex:1;height:10px;border-radius:3px;background:var(--sunk)}
+.sumbar i.p{background:var(--pass)} .sumbar i.f{background:var(--fail)}
+
+/* home */
+.hero{display:flex;flex-direction:column;gap:14px;max-width:70ch}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,250px),1fr));gap:12px}
+.card{text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:6px;transition:border-color .2s,transform .2s}
+.card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.card .wk{font-family:var(--f-mono);font-size:.75rem;color:var(--accent);letter-spacing:.06em}
+.card b{font-family:var(--f-display);font-size:1.08rem;font-weight:700;line-height:1.25}
+.card p{font-size:.88rem;color:var(--muted)}
+.card .foot{margin-top:auto;padding-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pager{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:18px}
+
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+
+<header class="top"><div class="top-in">
+  <button class="brand" data-go="home"><b>Lab SQA</b><span class="mono">CCK3FAB3 · Minggu 1–7</span></button>
+  <div class="suite"><span class="lbl">Test suite lulus</span><span class="suite-bar" id="suiteBar"></span><span id="suiteTxt">0/7</span></div>
+</div></header>
+
+<div class="frame">
+  <nav class="rail" id="rail" aria-label="Daftar minggu"></nav>
+  <main id="main"></main>
+</div>
+
+<script>
+const RM = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+const sleep = ms => new Promise(r => setTimeout(r, RM ? 0 : ms));
+const store = {
+  get(k){ try { return JSON.parse(localStorage.getItem(k)); } catch(e){ return null; } },
+  set(k,v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+const NS = 'http://www.w3.org/2000/svg';
+
+/* ---------- generic: sorter ---------- */
+function sorter(el, buckets, items){
+  el.innerHTML = `<div class="row"><span class="pill idle" id="sScore">0/${items.length} benar</span><button class="btn" data-r>Ulangi</button></div><div class="sort-list"></div>`;
+  const list = $('.sort-list', el);
+  const draw = () => {
+    list.innerHTML = items.map((it,i)=>`<div class="sort-row" data-i="${i}"><span>${it[0]}</span><span class="bk">${buckets.map(b=>`<button data-b="${b}">${b}</button>`).join('')}</span><p class="why" hidden>${it[2]}</p></div>`).join('');
+    $('#sScore', el).textContent = `0/${items.length} benar`;
+  };
+  draw();
+  list.addEventListener('click', e => {
+    const b = e.target.closest('button[data-b]'); if(!b) return;
+    const row = b.closest('.sort-row'); const it = items[+row.dataset.i];
+    $$('button', row).forEach(x=>x.classList.toggle('pick', x===b));
+    row.classList.remove('ok','no'); void row.offsetWidth;
+    row.classList.add(b.dataset.b === it[1] ? 'ok' : 'no');
+    $('.why', row).hidden = false;
+    $('#sScore', el).textContent = `${$$('.sort-row.ok', list).length}/${items.length} benar`;
+  });
+  $('[data-r]', el).onclick = draw;
+}
+
+/* ---------- generic: stepper ---------- */
+function stepper(el, steps){
+  let cur = 0, timer = null;
+  el.innerHTML = `<div class="stepper">
+    <div class="track" style="grid-template-columns:repeat(${steps.length},minmax(0,1fr))"><div class="fill"></div>
+      ${steps.map((s,i)=>`<button data-i="${i}"><i>${i+1}</i><span>${s[0]}</span></button>`).join('')}</div>
+    <div class="panel" aria-live="polite"></div>
+    <div class="row"><button class="btn" data-a="prev">Sebelumnya</button><button class="btn pri" data-a="play">Putar otomatis</button><button class="btn" data-a="next">Berikutnya</button></div></div>`;
+  const show = i => {
+    cur = Math.max(0, Math.min(steps.length-1, i));
+    $$('.track button', el).forEach((b,j)=>{ b.classList.toggle('done', j<cur); b.classList.toggle('cur', j===cur); });
+    $('.fill', el).style.width = (92 * cur/(steps.length-1)) + '%';
+    $('.panel', el).innerHTML = `<b>Langkah ${cur+1} · ${steps[cur][0]}</b><br>${steps[cur][1]}`;
+  };
+  const stop = () => { clearInterval(timer); timer = null; $('[data-a=play]', el).textContent = 'Putar otomatis'; };
+  el.addEventListener('click', e => {
+    const s = e.target.closest('.track button'); if(s){ stop(); show(+s.dataset.i); return; }
+    const a = e.target.closest('[data-a]'); if(!a) return;
+    if(a.dataset.a==='prev'){ stop(); show(cur-1); }
+    if(a.dataset.a==='next'){ stop(); show(cur+1); }
+    if(a.dataset.a==='play'){
+      if(timer){ stop(); return; }
+      if(cur===steps.length-1) show(0);
+      a.textContent = 'Jeda';
+      timer = setInterval(()=>{ if(!el.isConnected || cur>=steps.length-1){ stop(); return; } show(cur+1); }, 1700);
+    }
+  });
+  show(0);
+}
+
+/* ---------- generic: flow graph ---------- */
+function shorten(x1,y1,x2,y2,d){ const dx=x2-x1, dy=y2-y1, L=Math.hypot(dx,dy)||1; return [x1+dx/L*d, y1+dy/L*d]; }
+function mkGraph(svg, spec){
+  const R = spec.r || 16;
+  svg.setAttribute('viewBox', spec.vb); svg.classList.add('graph','svgbox');
+  svg.innerHTML = `<defs><marker id="${spec.id}-ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker></defs><g class="E"></g><g class="N"></g><circle class="token" r="7" cx="-40" cy="-40"/>`;
+  const edges = {}, nodes = {};
+  spec.edges.forEach(([a,b,c,lab]) => {
+    const [x1,y1] = spec.nodes[a], [x2,y2] = spec.nodes[b];
+    let d;
+    if(c){ const s=shorten(x1,y1,c[0],c[1],R), t=shorten(x2,y2,c[0],c[1],R+1); d=`M${s[0]},${s[1]} Q${c[0]},${c[1]} ${t[0]},${t[1]}`; }
+    else { const s=shorten(x1,y1,x2,y2,R), t=shorten(x2,y2,x1,y1,R+1); d=`M${s[0]},${s[1]} L${t[0]},${t[1]}`; }
+    const p = document.createElementNS(NS,'path');
+    p.setAttribute('d', d); p.setAttribute('class','edge'); p.setAttribute('marker-end', `url(#${spec.id}-ar)`);
+    $('.E', svg).append(p); edges[a+'-'+b] = p;
+    if(lab){ const L=p.getTotalLength(), m=p.getPointAtLength(L/2); const t=document.createElementNS(NS,'text'); t.setAttribute('x', m.x+6); t.setAttribute('y', m.y-4); t.setAttribute('class','elab'); t.textContent=lab; $('.E', svg).append(t); }
+  });
+  Object.entries(spec.nodes).forEach(([id,[x,y,cap,side]]) => {
+    const g = document.createElementNS(NS,'g'); g.setAttribute('class','node');
+    const anchor = side==='l' ? 'end' : 'start', dx = side==='l' ? -R-6 : R+6;
+    g.innerHTML = `<circle cx="${x}" cy="${y}" r="${R}"/><text class="id" x="${x}" y="${y}">${id}</text>${cap?`<text class="cap" x="${x+dx}" y="${y+4}" text-anchor="${anchor}">${cap}</text>`:''}`;
+    $('.N', svg).append(g); nodes[id] = g;
+  });
+  return { svg, edges, nodes, token: $('.token', svg) };
+}
+function moveAlong(tok, path, ms){
+  return new Promise(res => {
+    const L = path.getTotalLength();
+    if(RM){ const p=path.getPointAtLength(L); tok.setAttribute('cx',p.x); tok.setAttribute('cy',p.y); res(); return; }
+    const t0 = performance.now();
+    const f = t => { const k=Math.min(1,(t-t0)/ms); const p=path.getPointAtLength(L*k); tok.setAttribute('cx',p.x); tok.setAttribute('cy',p.y); k<1 ? requestAnimationFrame(f) : res(); };
+    requestAnimationFrame(f);
+  });
+}
+async function walk(G, seq, ms=420){
+  G.token.classList.add('on');
+  Object.values(G.nodes).forEach(n=>n.classList.remove('cur'));
+  G.nodes[seq[0]].classList.add('hit','cur');
+  for(let i=0;i<seq.length-1;i++){
+    const e = G.edges[seq[i]+'-'+seq[i+1]];
+    e.classList.add('now');
+    await moveAlong(G.token, e, ms);
+    e.classList.remove('now'); e.classList.add('hit');
+    G.nodes[seq[i]].classList.remove('cur'); G.nodes[seq[i+1]].classList.add('hit','cur');
+  }
+  await sleep(200);
+  G.token.classList.remove('on');
+}
+function resetGraph(G){ Object.values(G.edges).forEach(e=>e.classList.remove('hit','now')); Object.values(G.nodes).forEach(n=>n.classList.remove('hit','cur')); }
+
+/* ---------- arcs ---------- */
+function pt(cx,cy,r,a){ const t=a*Math.PI/180; return [cx+r*Math.sin(t), cy-r*Math.cos(t)]; }
+function arc(cx,cy,r0,r1,a0,a1){
+  const [x1,y1]=pt(cx,cy,r1,a0),[x2,y2]=pt(cx,cy,r1,a1),[x3,y3]=pt(cx,cy,r0,a1),[x4,y4]=pt(cx,cy,r0,a0);
+  return `M${x1},${y1} A${r1},${r1} 0 0 1 ${x2},${y2} L${x3},${y3} A${r0},${r0} 0 0 0 ${x4},${y4} Z`;
+}
+
+/* =================== LABS =================== */
+const LABS = {
+/* ---- W1 ---- */
+eff(el){
+  el.innerHTML = `
+  <pre class="code"><span class="ln">1</span>function bolehVoting(umur) {
+<span class="ln">2</span>  <span class="bad">if (umur &gt; 17)</span> return "Boleh";
+<span class="ln">3</span>  return "Tidak boleh";
+<span class="ln">4</span>}</pre>
+  <p style="font-size:.92rem">Spesifikasi: warga berumur <b>17 tahun ke atas</b> boleh memilih (umur ≥ 17).</p>
+  <div class="stages">
+    <div class="stage" data-s="0"><span class="mono">Tahap 1 · Error</span><b>Programmer salah tulis</b><p>Menulis <code>&gt;</code> padahal seharusnya <code>&gt;=</code>. Ini kesalahan manusia.</p></div>
+    <div class="stage" data-s="1"><span class="mono">Tahap 2 · Fault</span><b>Cacat tersimpan di kode</b><p>Software dirilis dengan baris 2 yang salah. Selama baris itu tidak memberi hasil salah, belum ada yang sadar.</p></div>
+    <div class="stage" data-s="2"><span class="mono">Tahap 3 · Failure</span><b>Gagal saat dipakai</b><p data-f>Geser umur lalu tekan Jalankan.</p></div>
+  </div>
+  <div class="row"><label for="ageR">Umur user: <b data-age>17</b></label><input type="range" id="ageR" min="12" max="22" value="17"><button class="btn pri" data-run>Jalankan</button></div>
+  <div class="panel" data-res aria-live="polite">Coba umur 17, lalu bandingkan dengan umur 20 atau 15.</div>`;
+  const r = $('#ageR', el); r.oninput = () => $('[data-age]', el).textContent = r.value;
+  $('[data-run]', el).onclick = async () => {
+    const st = $$('.stage', el); st.forEach(s=>s.className='stage');
+    const u = +r.value, expect = u>=17 ? 'Boleh':'Tidak boleh', got = u>17 ? 'Boleh':'Tidak boleh', bad = expect!==got;
+    st[0].classList.add('lit'); await sleep(450);
+    st[1].classList.add('lit'); await sleep(450);
+    st[2].classList.add('lit', bad?'fail':'pass');
+    $('[data-f]', el).textContent = bad ? `Input ${u} memicu baris yang salah. Hasil tidak sesuai spesifikasi.` : `Input ${u} tidak memicu cacatnya. Fault tetap "tidur".`;
+    $('[data-res]', el).innerHTML = `Diharapkan: <b>${expect}</b> · Hasil aktual: <b>${got}</b> → <span class="pill ${bad?'fail':'pass'}">${bad?'FAILURE':'tidak ada failure'}</span>${bad?'':' <br>Fault tetap ada di kode walaupun tidak terlihat. Karena itu testing perlu memilih input yang tepat.'}`;
+  };
+},
+pdca(el){
+  const D = [['Plan','Rencanakan dan tetapkan tujuan proses serta proses apa saja yang dibutuhkan untuk menghasilkan produk berkualitas.'],
+             ['Do','Kembangkan dan uji proses, lalu jalankan perubahan proses.'],
+             ['Check','Pantau proses, ubah bila perlu, dan cek apakah tujuan yang ditetapkan tercapai.'],
+             ['Act','Lakukan tindakan yang diperlukan untuk memperbaiki proses. Setelah itu siklus diulang.']];
+  const fills = ['var(--accent)','var(--pass)','var(--warn)','var(--fail)'];
+  el.innerHTML = `<div class="split"><svg class="svgbox" viewBox="0 0 220 220" style="max-width:300px;margin-inline:auto">
+    <circle class="spin" cx="110" cy="110" r="104" fill="none" stroke="var(--line)" stroke-width="2" stroke-dasharray="6 8"/>
+    ${D.map((d,i)=>{ const a0=i*90+2, a1=i*90+88, m=pt(110,110,70,i*90+45); return `<g class="pdca-seg" data-i="${i}" tabindex="0" role="button" aria-label="${d[0]}"><path d="${arc(110,110,42,96,a0,a1)}" fill="${fills[i]}" opacity=".85"/><text x="${m[0]}" y="${m[1]+5}" text-anchor="middle" style="font-family:var(--f-display);font-weight:700;font-size:15px;fill:var(--bg)">${d[0]}</text></g>`; }).join('')}
+    <text x="110" y="106" text-anchor="middle" style="font-family:var(--f-mono);font-size:10px;fill:var(--muted)">SIKLUS</text><text x="110" y="121" text-anchor="middle" style="font-family:var(--f-mono);font-size:10px;fill:var(--muted)">DEMING</text>
+  </svg><div style="display:flex;flex-direction:column;gap:12px"><div class="panel" aria-live="polite">Klik salah satu fase, atau putar siklusnya.</div><div class="row"><button class="btn pri" data-play>Putar siklus</button></div><p style="font-size:.9rem;color:var(--muted)">QA memakai siklus ini berulang-ulang supaya proses di organisasi terus dievaluasi dan diperbaiki.</p></div></div>`;
+  const segs = $$('.pdca-seg', el);
+  const pick = i => { segs.forEach((s,j)=>s.style.opacity = j===i ? 1 : .35); $('.panel', el).innerHTML = `<b>${D[i][0]}</b><br>${D[i][1]}`; };
+  segs.forEach(s => { s.onclick = () => pick(+s.dataset.i); s.onkeydown = e => { if(e.key==='Enter'||e.key===' '){ e.preventDefault(); pick(+s.dataset.i);} }; });
+  $('[data-play]', el).onclick = async e => { e.target.disabled = true; for(let k=0;k<8;k++){ if(!el.isConnected) return; pick(k%4); await sleep(1100);} e.target.disabled = false; };
+},
+qaqc(el){
+  sorter(el, ['QA','QC'], [
+    ['Quality audit','QA','Audit memeriksa apakah proses diikuti. Fokusnya proses, jadi QA.'],
+    ['Testing','QC','Testing memeriksa produk jadi untuk mencari masalah. Fokusnya produk, jadi QC.'],
+    ['Mendefinisikan proses','QA','Menyusun proses adalah upaya pencegahan (preventif), jadi QA.'],
+    ['Inspection','QC','Inspeksi memeriksa hasil kerja (produk), jadi QC.'],
+    ['Memilih tools pengembangan','QA','Pemilihan tool termasuk perbaikan proses, jadi QA.'],
+    ['Walkthrough','QC','Menurut artikel minggu 1, walkthrough adalah aktivitas QC karena memeriksa produk kerja.'],
+    ['Training standar & proses kualitas','QA','Training mencegah kesalahan terjadi, jadi QA.'],
+    ['Checkpoint review','QC','Review di titik tertentu atas hasil kerja, jadi QC.']
+  ]);
+},
+/* ---- W2 ---- */
+mccall(el){
+  const M = {
+    'Product Operation':[['Correctness','Memenuhi spesifikasi dan menjalankan tugasnya.','Completeness, Consistency, Traceability'],['Reliability','Bisa diandalkan, akurat, bekerja saat dibutuhkan.','Accuracy, Error Tolerance, Consistency, Simplicity'],['Efficiency','Hemat CPU, memori, disk, dan sumber daya komunikasi.','Execution Efficiency, Storage Efficiency'],['Integrity','Kelengkapan, konsistensi, dan keamanan dokumentasi, software, serta data.','Access Control, Access Audit'],['Usability','Mudah dipakai oleh pemula maupun ahli.','Communicativeness, Operability, Training']],
+    'Product Revision':[['Maintainability','Mudah menemukan dan memperbaiki error.','Consistency, Conciseness, Simplicity, Modularity, Self-documentation'],['Flexibility','Mudah menambah atau mengubah fungsionalitas.','Expandability, Generality, Modularity, Self-documentation'],['Testability','Mudah dan praktis untuk diuji.','Simplicity, Modularity, Instrumentation, Self-documentation']],
+    'Product Transition':[['Portability','Bisa berjalan di hardware atau OS lain.','Software/Hardware Independence, Self-documentation, Modularity'],['Reusability','Komponennya generik dan bisa dipakai program lain.','Generality, Software/Hardware Independence, Modularity'],['Interoperability','Bisa dihubungkan dengan program lain, misalnya output X menjadi input Y.','Communication Commonality, Data Commonality, Modularity']]
+  };
+  const sides = {'Product Revision':[150,22,24,238],'Product Transition':[150,22,276,238],'Product Operation':[24,238,276,238]};
+  const labs = {'Product Revision':[70,118,'end'],'Product Transition':[230,118,'start'],'Product Operation':[150,268,'middle']};
+  el.innerHTML = `<div class="split"><svg class="svgbox" viewBox="-110 0 520 285" style="max-width:440px;margin-inline:auto">
+    <polygon points="150,22 24,238 276,238" fill="var(--sunk)"/>
+    ${Object.entries(sides).map(([k,[a,b,c,d]])=>`<g data-k="${k}" style="cursor:pointer" tabindex="0" role="button" aria-label="${k}"><line x1="${a}" y1="${b}" x2="${c}" y2="${d}" stroke="transparent" stroke-width="22"/><line class="sd" x1="${a}" y1="${b}" x2="${c}" y2="${d}" stroke="var(--muted)" stroke-width="5" stroke-linecap="round"/><text x="${labs[k][0]}" y="${labs[k][1]}" text-anchor="${labs[k][2]}" style="font-family:var(--f-display);font-weight:700;font-size:14px">${k.replace('Product ','')}</text></g>`).join('')}
+    <text x="150" y="160" text-anchor="middle" style="font-family:var(--f-mono);font-size:11px;fill:var(--muted)">11 FAKTOR</text><text x="150" y="176" text-anchor="middle" style="font-family:var(--f-mono);font-size:11px;fill:var(--muted)">23 KRITERIA</text>
+  </svg><div style="display:flex;flex-direction:column;gap:12px;min-width:0"><div class="row" data-chips></div><div class="panel" data-p aria-live="polite"></div></div></div>`;
+  const pick = k => {
+    $$('[data-k]', el).forEach(g => { const on = g.dataset.k===k; g.querySelector('.sd').setAttribute('stroke', on?'var(--accent)':'var(--muted)'); g.querySelector('.sd').setAttribute('stroke-width', on?9:5); });
+    $('[data-chips]', el).innerHTML = M[k].map((f,i)=>`<button class="chip" data-f="${i}" aria-pressed="false">${f[0]}</button>`).join('');
+    $('[data-p]', el).innerHTML = `<b>${k}</b><br>Pilih salah satu faktor untuk melihat kriterianya.`;
+    $$('[data-f]', el).forEach(b => b.onclick = () => { $$('[data-f]', el).forEach(x=>x.setAttribute('aria-pressed', x===b)); const f = M[k][+b.dataset.f]; $('[data-p]', el).innerHTML = `<b>${f[0]}</b> · ${k}<br>${f[1]}<br><span class="mono" style="color:var(--muted)">Kriteria:</span> ${f[2]}`; });
+  };
+  $$('[data-k]', el).forEach(g => { g.onclick = () => pick(g.dataset.k); g.onkeydown = e => { if(e.key==='Enter'){ pick(g.dataset.k);} }; });
+  pick('Product Operation');
+},
+halstead(el){
+  el.innerHTML = `<div class="split"><div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+    <pre class="code">Z = 20;  Y = -2;  X = 5;
+While X&gt;0
+  Z = Z + Y;
+  if Z &gt; 0 Then X = X – 1; end-if;
+End-while;
+Print(Z);</pre>
+    <p style="font-size:.88rem;color:var(--muted)">Contoh dari slide minggu 2: n1 = 9, n2 = 8, N1 = 21, N2 = 17. Ubah angkanya untuk melihat pengaruhnya.</p>
+    <div class="row">
+      <label>n1 <input type="number" min="1" id="h1" value="9"></label><label>n2 <input type="number" min="1" id="h2" value="8"></label>
+      <label>N1 <input type="number" min="1" id="h3" value="21"></label><label>N2 <input type="number" min="1" id="h4" value="17"></label>
+    </div></div>
+    <div style="display:flex;flex-direction:column;gap:10px;min-width:0"><div class="formula" data-o></div><div data-bars style="display:flex;flex-direction:column;gap:8px"></div></div></div>`;
+  const ids = ['#h1','#h2','#h3','#h4'];
+  const calc = () => {
+    const [n1,n2,N1,N2] = ids.map(i=>Math.max(1, +$(i,el).value||1));
+    const n=n1+n2, N=N1+N2, V=N*Math.log2(n), D=(n1/2)*(N2/n2), E=D*V, T=E/18;
+    $('[data-o]', el).textContent = `Vocabulary n = n1 + n2       = ${n}\nLength     N = N1 + N2       = ${N}\nVolume     V = N · log2(n)   = ${V.toFixed(1)}\nDifficulty D = (n1/2)·(N2/n2) = ${D.toFixed(2)}\nEffort     E = D · V         = ${E.toFixed(0)}\nTime       T = E / 18        = ${T.toFixed(1)} detik`;
+    const rows = [['Volume (V)',V,2000],['Difficulty (D)',D,60],['Effort (E)',E,60000]];
+    $('[data-bars]', el).innerHTML = rows.map(r=>`<div class="meter"><span>${r[0]}</span><div class="bar"><i style="width:${Math.min(100,r[1]/r[2]*100)}%"></i></div></div>`).join('');
+  };
+  ids.forEach(i => $(i,el).oninput = calc); calc();
+},
+cmmi(el){
+  const L = [['Initial','Tanpa prosedur dan perencanaan. Hasil tidak konsisten dan bergantung pada individu.'],['Repeatable','Ada manajemen proyek, jaminan kualitas, dan prosedur. Proses bisa diulang di level proyek.'],['Defined','Proses terdefinisi dan terdokumentasi di level organisasi. Perbaikan proses secara kualitatif.'],['Managed','Proses diukur dan dikendalikan dengan metrik. Perbaikan dan prediksi secara kuantitatif.'],['Optimizing','Perbaikan berkelanjutan dan inovatif, direncanakan, dianggarkan, dan menyatu dengan proses organisasi.']];
+  el.innerHTML = `<div class="stairs">${L.map((l,i)=>`<button data-i="${i}" style="height:${30+i*17}%"><b>${i+1}</b><span>${l[0]}</span></button>`).join('')}</div><div class="panel" aria-live="polite"></div><div class="row"><button class="btn pri" data-up>Naik level</button></div>`;
+  let cur = 0;
+  const show = i => { cur = i; $$('.stairs button', el).forEach((b,j)=>{ b.classList.toggle('on', j===i); b.classList.toggle('past', j<i); }); $('.panel', el).innerHTML = `<b>Level ${i+1} · ${L[i][0]}</b><br>${L[i][1]}`; };
+  $$('.stairs button', el).forEach(b => b.onclick = () => show(+b.dataset.i));
+  $('[data-up]', el).onclick = () => show((cur+1)%5);
+  show(0);
+},
+/* ---- W3 ---- */
+components(el){
+  const C = [
+    ['Pre-project','Komponen pra-proyek',[0],'Contract review, development plan, quality plan. Tujuannya memperbaiki persiapan sebelum proyek dimulai.'],
+    ['Project life cycle','Komponen siklus hidup proyek',[1,2],'Review (formal design review & peer review), expert opinion, software testing, software maintenance, QA atas pekerjaan subkontraktor dan pelanggan.'],
+    ['Infrastructure','Pencegahan error & perbaikan',[0,1,2],'Prosedur & instruksi kerja, template & checklist, training dan sertifikasi staf, configuration management, document control, tindakan preventif & korektif.'],
+    ['Quality management','Manajemen kualitas',[1,2],'Kontrol progres proyek (sumber daya, jadwal, risiko, anggaran), metrik kualitas, dan analisis biaya kualitas.'],
+    ['Standards','Standar, sertifikasi & asesmen',[0,1,2],'Standar quality management (ISO 9001, CMM: "apa" yang harus dicapai) dan standar project process (IEEE 1012, ISO/IEC 12207: "bagaimana" melakukannya).'],
+    ['Human','Organisasi untuk SQA',[0,1,2],'Manajemen (kebijakan mutu, sumber daya), SQA unit (full-time: program mutu tahunan, audit internal), SQA trustees, committees, dan forums.']
+  ];
+  el.innerHTML = `<div class="lifebar"><div>Pra-proyek</div><div>Pengembangan</div><div>Operasi & pemeliharaan</div></div>
+    <div class="tiles">${C.map((c,i)=>`<button class="tile" data-i="${i}" aria-pressed="false"><span class="mono">Kelas ${i+1}</span><b>${c[1]}</b></button>`).join('')}</div>
+    <div class="panel" aria-live="polite">Klik salah satu kelas untuk melihat isinya dan di fase mana kelas itu berperan.</div>`;
+  const bars = $$('.lifebar div', el);
+  $$('.tile', el).forEach(t => t.onclick = () => {
+    const c = C[+t.dataset.i];
+    $$('.tile', el).forEach(x=>x.setAttribute('aria-pressed', x===t));
+    bars.forEach((b,j)=>b.classList.toggle('on', c[2].includes(j)));
+    $('.panel', el).innerHTML = `<b>${c[1]}</b> <span class="mono" style="color:var(--muted)">(${c[0]})</span><br>${c[3]}`;
+  });
+},
+contract(el){
+  const S1 = ['Requirement pelanggan sudah diklarifikasi dan didokumentasikan','Pendekatan alternatif untuk proyek sudah ditinjau','Aspek formal hubungan pelanggan–perusahaan sudah ditetapkan','Risiko pengembangan sudah diidentifikasi','Estimasi sumber daya dan jadwal sudah memadai','Kapasitas perusahaan untuk proyek ini sudah diperiksa','Kapasitas pelanggan memenuhi komitmennya sudah diperiksa','Syarat keterlibatan partner/subkontraktor sudah ditetapkan','Hak kepemilikan (proprietary rights) sudah ditetapkan dan dilindungi'];
+  const S2 = ['Tidak ada isu yang belum jelas di draft kontrak','Semua kesepahaman sudah terdokumentasi lengkap dan benar','Tidak ada perubahan, tambahan, atau penghapusan yang belum disepakati'];
+  const box = (id,t,items,lock) => `<div class="stagebox ${lock?'locked':''}" data-s="${id}"><span class="mono" style="color:var(--accent)">Tahap ${id}</span><h3>${t}</h3><div class="prog"><i></i></div><div class="checks">${items.map((x,i)=>`<label><input type="checkbox" id="cr${id}-${i}"> <span>${x}</span></label>`).join('')}</div><div class="gate">${id===1?'Proposal belum boleh dikirim':'Kontrak belum boleh ditandatangani'}</div></div>`;
+  el.innerHTML = `<div class="split">${box(1,'Proposal draft review',S1,false)}${box(2,'Contract draft review',S2,true)}</div>`;
+  const upd = () => {
+    const [b1,b2] = $$('.stagebox', el);
+    const c1 = $$('input', b1).filter(x=>x.checked).length, c2 = $$('input', b2).filter(x=>x.checked).length;
+    $('.prog i', b1).style.width = c1/S1.length*100+'%'; $('.prog i', b2).style.width = c2/S2.length*100+'%';
+    const ok1 = c1===S1.length, ok2 = ok1 && c2===S2.length;
+    $('.gate', b1).classList.toggle('open', ok1); $('.gate', b1).textContent = ok1 ? '✓ Proposal siap dikirim ke calon pelanggan' : `Proposal belum boleh dikirim (${c1}/${S1.length})`;
+    b2.classList.toggle('locked', !ok1);
+    $('.gate', b2).classList.toggle('open', ok2); $('.gate', b2).textContent = ok2 ? '✓ Kontrak siap ditandatangani' : `Kontrak belum boleh ditandatangani (${c2}/${S2.length})`;
+  };
+  el.addEventListener('change', upd); upd();
+},
+/* ---- W4 ---- */
+vv(el){
+  sorter(el, ['Verifikasi','Validasi'], [
+    ['Review dokumen SRS','Verifikasi','Memeriksa dokumen tanpa menjalankan kode. Ini static testing.'],
+    ['Unit testing','Validasi','Kode dijalankan. Ini dynamic testing.'],
+    ['Walkthrough desain','Verifikasi','Walkthrough adalah metode verifikasi.'],
+    ['User acceptance testing','Validasi','Mengecek apakah produk sesuai kebutuhan nyata pelanggan.'],
+    ['Inspeksi kode','Verifikasi','Kode dibaca, tidak dieksekusi.'],
+    ['System testing','Validasi','Seluruh sistem dijalankan dan diuji.'],
+    ['Desk-checking','Verifikasi','Programmer menelusuri kode secara manual.'],
+    ['Integration testing','Validasi','Modul yang digabung dijalankan bersama.']
+  ]);
+},
+roles(el){
+  const R = [['Review leader','Memimpin review, menyiapkan agenda, dan menjaga diskusi tetap pada jalurnya.'],['Recorder','Mencatat semua isu dan error yang ditemukan selama review.'],['Producer','Pembuat work product yang direview. Menjelaskan produknya, bukan membela diri.'],['Reviewer','Memeriksa work product sebelum dan selama rapat, lalu mengangkat masalah.'],['Standards bearer (SQA)','Memastikan work product memenuhi standar dan prosedur yang berlaku.'],['Maintenance oracle','Menilai dari sudut pandang pemeliharaan: apakah mudah dirawat ke depannya.'],['User rep','Mewakili kebutuhan pengguna agar produk tetap sesuai yang diminta.']];
+  el.innerHTML = `<div class="split"><div class="table-wrap"><div class="tbl">Meja review<br>work product</div>${R.map((r,i)=>{ const a=i/R.length*2*Math.PI - Math.PI/2; return `<button class="seat" data-i="${i}" aria-pressed="false" style="left:${50+40*Math.cos(a)}%;top:${50+40*Math.sin(a)}%">${r[0].replace(' (SQA)','')}</button>`; }).join('')}</div>
+  <div style="display:flex;flex-direction:column;gap:10px"><div class="panel" aria-live="polite">Klik kursi untuk melihat peran tiap pemain dalam review.</div><p style="font-size:.9rem;color:var(--muted)">Pedoman utama: <b>review produknya, bukan orangnya</b>. Angkat masalah, jangan coba menyelesaikan semuanya di rapat.</p></div></div>`;
+  $$('.seat', el).forEach(s => s.onclick = () => { $$('.seat', el).forEach(x=>x.setAttribute('aria-pressed', x===s)); const r = R[+s.dataset.i]; $('.panel', el).innerHTML = `<b>${r[0]}</b><br>${r[1]}`; });
+},
+inspection(el){
+  stepper(el, [
+    ['Overview','Seorang anggota tim pembuat dokumen memberi gambaran umum dokumen kepada tim inspeksi.'],
+    ['Preparation','Setiap peserta mempelajari dokumen, melihat daftar jenis fault yang pernah ditemukan, dan membuat catatan.'],
+    ['Inspection','Rapat inspeksi: satu anggota tim menelusuri dokumen. Sehari setelah rapat, moderator membuat laporan tertulis.'],
+    ['Rework','Tim pembuat dokumen memperbaiki semua item yang ada di laporan.'],
+    ['Follow-up','Moderator memastikan setiap item sudah selesai dan perbaikan tidak memunculkan fault baru.']
+  ]);
+},
+/* ---- W5 ---- */
+basis(el){
+  el.innerHTML = `<div class="split"><div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+    <pre class="code" data-code><span data-l="1">i = 0;
+while (i &lt; n-1) do              <span class="mono">①</span></span>
+<span data-l="2">  j = i + 1;
+  while (j &lt; n) do              <span class="mono">②</span></span>
+<span data-l="3">    if A[i] &lt; A[j] then         <span class="mono">③</span></span>
+<span data-l="4">      swap(A[i], A[j]);          <span class="mono">④</span></span>
+<span data-l="5">  end do;                        <span class="mono">⑤</span></span>
+<span data-l="6">  i = i + 1;                     <span class="mono">⑥</span></span>
+<span data-l="7">end do;                          <span class="mono">⑦</span></span></pre>
+    <div class="formula">E = 9 edge, N = 7 node, P = 3 predikat (①②③)
+V(G) = E − N + 2 = 9 − 7 + 2 = 4
+V(G) = P + 1     = 3 + 1     = 4</div>
+    <div class="row" data-paths></div>
+    <div class="log" data-log></div>
+  </div><svg data-g></svg></div>`;
+  const G = mkGraph($('[data-g]', el), {id:'bp', vb:'0 0 340 370', nodes:{1:[170,34,'while i<n-1'],2:[170,104,'while j<n'],3:[170,180,'if A[i]<A[j]'],4:[90,250,'swap','l'],5:[170,320,'end do'],6:[285,180,'i=i+1'],7:[50,104,'selesai','l']},
+    edges:[[1,7],[1,2],[2,3],[3,4],[4,5],[3,5],[5,2,[245,230]],[2,6],[6,1,[300,70]]]});
+  $('[data-g]', el).style.maxWidth = '380px';
+  const P = [[1,7],[1,2,6,1,7],[1,2,3,4,5,2,6,1,7],[1,2,3,5,2,6,1,7]];
+  const seen = new Set(); let busy = false;
+  $('[data-paths]', el).innerHTML = P.map((p,i)=>`<button class="btn" data-p="${i}">Jalur ${i+1}</button>`).join('') + `<button class="btn" data-reset>Reset</button>`;
+  const hiCode = n => $$('[data-l]', el).forEach(s=>s.classList.toggle('hl', +s.dataset.l===n));
+  $$('[data-p]', el).forEach(b => b.onclick = async () => {
+    if(busy) return; busy = true; $$('[data-p]', el).forEach(x=>x.disabled=true);
+    const p = P[+b.dataset.p], fresh = [];
+    for(let i=0;i<p.length-1;i++){ const k=p[i]+'-'+p[i+1]; if(!seen.has(k)){ fresh.push(k.replace('-','→')); seen.add(k);} }
+    const obs = new MutationObserver(()=>{ const c = Object.entries(G.nodes).find(([,g])=>g.classList.contains('cur')); if(c) hiCode(+c[0]); });
+    Object.values(G.nodes).forEach(g=>obs.observe(g,{attributes:true}));
+    await walk(G, p, 380); obs.disconnect(); hiCode(0);
+    $('[data-log]', el).insertAdjacentHTML('afterbegin', `<div>Jalur ${+b.dataset.p+1}: ${p.join('→')} · edge baru: ${fresh.length?fresh.join(', '):'tidak ada'} · ${seen.size}/9 edge</div>`);
+    busy = false; $$('[data-p]', el).forEach(x=>x.disabled=false);
+  });
+  $('[data-reset]', el).onclick = () => { if(busy) return; seen.clear(); resetGraph(G); $('[data-log]', el).innerHTML=''; };
+},
+lcom(el){
+  const V = ['a','b','c','d','e','x','y','z'];
+  const init = [['a','b','c','d','e'],['a','b','e'],['x','y','z']];
+  el.innerHTML = `<p style="font-size:.92rem">Centang instance variable yang dipakai tiap method. Contoh awal diambil dari slide (I1 = {a,b,c,d,e}, I2 = {a,b,e}, I3 = {x,y,z}).</p>
+  <div class="tbl-wrap"><table class="lcom"><thead><tr><th>Method</th>${V.map(v=>`<th>${v}</th>`).join('')}</tr></thead><tbody>${init.map((s,m)=>`<tr><td><b>M${m+1}</b></td>${V.map(v=>`<td><input type="checkbox" aria-label="M${m+1} memakai ${v}" data-m="${m}" data-v="${v}" ${s.includes(v)?'checked':''}></td>`).join('')}</tr>`).join('')}</tbody></table></div>
+  <div class="split"><div class="formula" data-pairs></div><div class="panel" data-res aria-live="polite"></div></div>`;
+  const calc = () => {
+    const sets = [0,1,2].map(m => new Set($$(`input[data-m="${m}"]`, el).filter(x=>x.checked).map(x=>x.dataset.v)));
+    let P=0, Q=0, lines=[];
+    [[0,1],[0,2],[1,2]].forEach(([i,j]) => { const inter=[...sets[i]].filter(v=>sets[j].has(v)); if(inter.length){Q++; lines.push(`I${i+1} ∩ I${j+1} = {${inter.join(',')}}  → Q`);} else {P++; lines.push(`I${i+1} ∩ I${j+1} = ∅          → P`);} });
+    const L = P>Q ? P-Q : 0;
+    $('[data-pairs]', el).textContent = lines.join('\n') + `\n\n|P| = ${P}, |Q| = ${Q}`;
+    $('[data-res]', el).innerHTML = `<b>LCOM = ${L}</b> <span class="pill ${L===0?'pass':'warn'}">${L===0?'cukup kohesif':'kurang kohesif'}</span><br>${L>0?'Ada method yang tidak berbagi variabel dengan method lain. Class ini mungkin bisa dipecah.':'Sebagian besar pasangan method berbagi variabel. Catatan: LCOM = 0 belum tentu kohesi maksimal.'}`;
+  };
+  el.addEventListener('change', calc); calc();
+},
+/* ---- W6 ---- */
+whitebox(el){
+  el.innerHTML = `<div class="split"><div style="display:flex;flex-direction:column;gap:12px;min-width:0">
+    <pre class="code"><span class="mono">①</span> input(Y)
+<span class="mono">②</span> if (Y &lt;= 0) then
+<span class="mono">③</span>    Y := −Y
+   end_if
+<span class="mono">④</span> while (Y &gt; 0) do
+<span class="mono">⑤</span>    input(X); Y := Y − 1
+   end_while
+<span class="mono">⑥</span> selesai</pre>
+    <div class="formula">E = 7, N = 6, P = 2  →  V(G) = 7 − 6 + 2 = 3</div>
+    <div class="row"><label for="wbY">Nilai Y: <b data-y>-1</b></label><input type="range" id="wbY" min="-4" max="4" value="-1"><button class="btn pri" data-run>Jalankan test</button><button class="btn" data-reset>Reset</button></div>
+    <div class="meter"><span data-sl>Statement coverage 0/6</span><div class="bar"><i data-sb></i></div></div>
+    <div class="meter"><span data-bl>Branch (edge) coverage 0/7</span><div class="bar"><i data-bb></i></div></div>
+    <div class="log" data-log></div>
+    <p style="font-size:.88rem;color:var(--muted)">Tantangan: capai 100% branch coverage dengan test sesedikit mungkin.</p>
+  </div><svg data-g></svg></div>`;
+  const G = mkGraph($('[data-g]', el), {id:'wb', vb:'0 0 330 360', nodes:{1:[150,30,'input(Y)'],2:[150,100,'Y<=0 ?'],3:[60,165,'Y := −Y','l'],4:[150,230,'Y>0 ?','l'],5:[270,230,'Y := Y−1'],6:[150,320,'selesai']},
+    edges:[[1,2],[2,3,null,'T'],[2,4,null,'F'],[3,4],[4,5,[210,195],'T'],[5,4,[210,265]],[4,6,null,'F']]});
+  $('[data-g]', el).style.maxWidth = '360px';
+  const nodesSeen = new Set(), edgesSeen = new Set(); let busy=false, runs=0;
+  const r = $('#wbY', el); r.oninput = () => $('[data-y]', el).textContent = r.value;
+  const upd = () => {
+    $('[data-sl]', el).textContent = `Statement coverage ${nodesSeen.size}/6`; $('[data-bl]', el).textContent = `Branch (edge) coverage ${edgesSeen.size}/7`;
+    const s=$('[data-sb]', el), b=$('[data-bb]', el); s.style.width = nodesSeen.size/6*100+'%'; b.style.width = edgesSeen.size/7*100+'%';
+    s.classList.toggle('full', nodesSeen.size===6); b.classList.toggle('full', edgesSeen.size===7);
+  };
+  $('[data-run]', el).onclick = async () => {
+    if(busy) return; busy=true; $('[data-run]', el).disabled=true;
+    let Y = +r.value; const y0 = Y; const seq=[1,2];
+    if(Y<=0){ seq.push(3); Y=-Y; } seq.push(4);
+    while(Y>0){ seq.push(5); Y--; seq.push(4); } seq.push(6);
+    seq.forEach(n=>nodesSeen.add(n)); for(let i=0;i<seq.length-1;i++) edgesSeen.add(seq[i]+'-'+seq[i+1]);
+    await walk(G, seq, 330); runs++;
+    $('[data-log]', el).insertAdjacentHTML('afterbegin', `<div>Test ${runs}: Y = ${y0} → ${seq.join('→')}</div>`);
+    upd();
+    if(edgesSeen.size===7) $('[data-log]', el).insertAdjacentHTML('afterbegin', `<div style="color:var(--pass)">100% branch coverage dengan ${runs} test.${runs===2?' Optimal!':' Bisa dengan 2 test, misalnya Y = −1 dan Y = 1.'}</div>`);
+    busy=false; $('[data-run]', el).disabled=false;
+  };
+  $('[data-reset]', el).onclick = () => { if(busy) return; nodesSeen.clear(); edgesSeen.clear(); runs=0; resetGraph(G); $('[data-log]', el).innerHTML=''; upd(); };
+  upd();
+},
+bva(el){
+  el.innerHTML = `<p style="font-size:.92rem">Contoh dari slide: subprogram menerima integer di rentang [−100, 100]. Ubah batasnya dan coba nilai input sendiri.</p>
+  <div class="row"><label>Batas bawah a <input type="number" id="ba" value="-100"></label><label>Batas atas b <input type="number" id="bb" value="100"></label><label>Coba nilai <input type="number" id="bv" value="101"></label></div>
+  <div style="overflow-x:auto"><svg class="svgbox" data-nl viewBox="0 0 640 110" style="min-width:420px"></svg></div>
+  <div class="zoom2"><div><span class="mono">Zoom batas bawah</span><svg class="svgbox" data-z1 viewBox="0 0 300 64"></svg></div><div><span class="mono">Zoom batas atas</span><svg class="svgbox" data-z2 viewBox="0 0 300 64"></svg></div></div>
+  <div class="panel" data-v aria-live="polite"></div>
+  <div class="tbl-wrap"><table><thead><tr><th>Kasus uji</th><th>Teknik</th><th>Input</th><th>Kelas</th><th>Hasil diharapkan</th></tr></thead><tbody data-t></tbody></table></div>`;
+  const zoom = (svg, c, a, b) => {
+    let h=''; for(let k=-3;k<=3;k++){ const v=c+k, x=30+(k+3)*40, ok=v>=a&&v<=b, isB=[a-1,a,a+1,b-1,b,b+1].includes(v);
+      h += `<line class="nl-tick" x1="${x}" y1="22" x2="${x}" y2="30"/><circle class="bva-pt ${ok?'ok':'bad'}" cx="${x}" cy="26" r="${isB?7:3.5}" opacity="${isB?1:.45}"/><text class="nl-lab" x="${x}" y="52">${v}</text>`; }
+    svg.innerHTML = `<line class="nl-axis" x1="10" y1="26" x2="290" y2="26"/>` + h;
+  };
+  const draw = () => {
+    const a=Math.round(+$('#ba',el).value), b=Math.round(+$('#bb',el).value), v=Math.round(+$('#bv',el).value);
+    if(!(a<b)){ $('[data-v]', el).innerHTML = '<b>Batas tidak valid.</b> Batas bawah harus lebih kecil dari batas atas.'; return; }
+    const pad = Math.max(3,(b-a)*.3), lo=a-pad, hi=b+pad, X = t => 30+(t-lo)/(hi-lo)*580;
+    const xv = Math.max(24, Math.min(616, X(v)));
+    $('[data-nl]', el).innerHTML = `
+      <rect class="zone-bad" x="30" y="30" width="${X(a)-30}" height="26" rx="4"/>
+      <rect class="zone-ok" x="${X(a)}" y="30" width="${X(b)-X(a)}" height="26"/>
+      <rect class="zone-bad" x="${X(b)}" y="30" width="${610-X(b)}" height="26" rx="4"/>
+      <text class="nl-lab" x="${(30+X(a))/2}" y="47">invalid</text><text class="nl-lab" x="${(X(a)+X(b))/2}" y="47">valid</text><text class="nl-lab" x="${(X(b)+610)/2}" y="47">invalid</text>
+      <line class="nl-axis" x1="20" y1="72" x2="620" y2="72"/>
+      <line class="nl-tick" x1="${X(a)}" y1="64" x2="${X(a)}" y2="80"/><text class="nl-lab" x="${X(a)}" y="96">a = ${a}</text>
+      <line class="nl-tick" x1="${X(b)}" y1="64" x2="${X(b)}" y2="80"/><text class="nl-lab" x="${X(b)}" y="96">b = ${b}</text>
+      <circle class="nl-dot" cx="${xv}" cy="72" r="7"/><text class="nl-lab" x="${xv}" y="20" style="font-weight:600">${v}</text>`;
+    zoom($('[data-z1]', el), a, a, b); zoom($('[data-z2]', el), b, a, b);
+    const cls = x => x<a ? 'Invalid (< a)' : x>b ? 'Invalid (> b)' : 'Valid';
+    const exp = x => x>=a&&x<=b ? 'Diterima' : 'Ditolak';
+    const ok = v>=a && v<=b;
+    $('[data-v]', el).innerHTML = `Input <b>${v}</b> masuk kelas <span class="pill ${ok?'pass':'fail'}">${cls(v)}</span>. ${[a-1,a,a+1,b-1,b,b+1].includes(v)?'Nilai ini termasuk titik boundary.':'Nilai ini bukan titik boundary.'}`;
+    const step = Math.max(1, Math.round((b-a)*.2));
+    const rows = [['EP','Math.round', Math.round((a+b)/2)],['EP','',a-step],['EP','',b+step],['BVA','',a-1],['BVA','',a],['BVA','',a+1],['BVA','',b-1],['BVA','',b],['BVA','',b+1]];
+    $('[data-t]', el).innerHTML = rows.map((r,i)=>`<tr><td class="mono">TC-${String(i+1).padStart(2,'0')}</td><td>${r[0]==='EP'?'Equivalence partitioning':'Boundary value'}</td><td style="font-variant-numeric:tabular-nums">${r[2]}</td><td>${cls(r[2])}</td><td><span class="pill ${exp(r[2])==='Diterima'?'pass':'fail'}">${exp(r[2])}</span></td></tr>`).join('');
+  };
+  el.addEventListener('input', draw); draw();
+},
+dtable(el){
+  const rules = [[1,1,'Diskon 10% + gratis ongkir'],[1,0,'Diskon 5%'],[0,1,'Gratis ongkir'],[0,0,'Tidak ada promo']];
+  const st = {m:1, t:1};
+  el.innerHTML = `<p style="font-size:.92rem"><span class="pill idle">Contoh</span> Aturan bisnis promo toko online. Ubah kondisinya dan lihat aturan mana yang berlaku.</p>
+  <div class="row"><span>Member?</span><span class="toggle" data-k="m"><button data-v="1">Ya</button><button data-v="0">Tidak</button></span>
+  <span>Belanja ≥ Rp500.000?</span><span class="toggle" data-k="t"><button data-v="1">Ya</button><button data-v="0">Tidak</button></span></div>
+  <div class="tbl-wrap"><table class="dt"><thead><tr><th></th>${rules.map((r,i)=>`<th data-c="${i}">Rule ${i+1}</th>`).join('')}</tr></thead><tbody>
+    <tr><td>Kondisi: Member</td>${rules.map((r,i)=>`<td data-c="${i}">${r[0]?'Y':'T'}</td>`).join('')}</tr>
+    <tr><td>Kondisi: Belanja ≥ 500rb</td>${rules.map((r,i)=>`<td data-c="${i}">${r[1]?'Y':'T'}</td>`).join('')}</tr>
+    <tr><td>Aksi</td>${rules.map((r,i)=>`<td data-c="${i}">${r[2]}</td>`).join('')}</tr></tbody></table></div>
+  <div class="panel" aria-live="polite"></div>`;
+  const upd = () => {
+    $$('.toggle', el).forEach(t => $$('button', t).forEach(b => b.setAttribute('aria-pressed', +b.dataset.v===st[t.dataset.k])));
+    const i = rules.findIndex(r=>r[0]===st.m && r[1]===st.t);
+    $$('[data-c]', el).forEach(c=>c.classList.toggle('on', +c.dataset.c===i));
+    $('.panel', el).innerHTML = `Berlaku <b>Rule ${i+1}</b>: ${rules[i][2]}. Setiap kolom rule menjadi minimal satu test case, jadi 2 kondisi biner menghasilkan 2² = 4 test case.`;
+  };
+  el.addEventListener('click', e => { const b = e.target.closest('.toggle button'); if(!b) return; st[b.parentElement.dataset.k] = +b.dataset.v; upd(); });
+  upd();
+},
+/* ---- W7 ---- */
+formality(el){
+  const T = [['Buddy check','Orang lain selain penulis memeriksa hasil kerja secara informal. Tidak ada pengumpulan data, sulit dikontrol, tanpa checklist, dan tidak repeatable.',[1,1,0,0,1]],
+             ['Walkthrough','Penulis mempresentasikan artefak ke rekan sejawat yang bertanya dan berkomentar. Sering berubah menjadi debat, biasanya tanpa persiapan, dan dokumentasinya minim.',[2,0,1,1,4]],
+             ['Review by circulation','Artefak diedarkan untuk dikomentari. Tidak ada debat, tetapi juga tidak ada manfaat diskusi. Reviewer bisa memeriksa lebih lama dan isu terdokumentasi.',[2,3,3,1,0]],
+             ['Inspection','Peer review yang terstruktur dan dikelola secara formal. Peran jelas, data dikumpulkan, ada target kuantitatif, dan artefak diperiksa terhadap kriteria yang tegas.',[4,4,4,4,3]]];
+  const A = ['Formalitas','Persiapan reviewer','Dokumentasi isu','Pengumpulan data','Diskusi tatap muka'];
+  el.innerHTML = `<div class="row"><label for="fm">Geser tingkat formalitas</label><input type="range" id="fm" min="0" max="3" value="0" style="width:min(320px,100%)"></div>
+  <div class="split"><div class="panel" aria-live="polite"></div><div class="form-meters">${A.map((a,i)=>`<span>${a}</span><span class="pips" data-a="${i}">${'<i></i>'.repeat(4)}</span>`).join('')}</div></div>
+  <p style="font-size:.84rem;color:var(--muted)">Skala relatif 0–4, disimpulkan dari ciri tiap jenis review di slide minggu 7.</p>`;
+  const show = i => { $('.panel', el).innerHTML = `<b>${T[i][0]}</b><br>${T[i][1]}`; $$('.pips', el).forEach((p,k)=>$$('i',p).forEach((x,j)=>x.classList.toggle('on', j<T[i][2][k]))); };
+  $('#fm', el).oninput = e => show(+e.target.value); show(0);
+},
+gilb(el){
+  stepper(el, [
+    ['Entry','Cek kriteria masuk: dokumen sudah siap diinspeksi.'],['Planning','Tentukan tim, peran, materi, dan jadwal inspeksi.'],['Kickoff','Rapat pembuka: tujuan dan materi dibagikan ke tim.'],['Individual checking','Setiap inspektor memeriksa dokumen sendiri dengan checklist dan aturan.'],['Logging meeting','Semua isu yang ditemukan dicatat bersama di rapat.'],['Root cause analysis','Mencari akar penyebab defect supaya prosesnya ikut diperbaiki.'],['Edit','Penulis memperbaiki dokumen sesuai log isu.'],['Follow-up','Moderator memeriksa bahwa semua perbaikan sudah dilakukan.'],['Exit','Cek kriteria keluar: dokumen dinyatakan lolos inspeksi.']
+  ]);
+},
+trace(el){
+  const R = [['R1','Login pengguna'],['R2','Cetak laporan'],['R3','Ekspor data'],['R4','Notifikasi email']];
+  const D = [['D1','Modul autentikasi'],['D2','Modul laporan'],['D3','Ekspor CSV'],['D4','Ekspor PDF']];
+  const T = [['T1','Uji login valid'],['T2','Uji login gagal'],['T3','Uji cetak'],['T4','Uji ekspor CSV'],['T5','Uji ekspor PDF'],['T6','Uji fitur chat']];
+  const L = [['R1','D1'],['R2','D2'],['R3','D3'],['R3','D4'],['D1','T1'],['D1','T2'],['D2','T3'],['D3','T4'],['D4','T5']];
+  const col = (t,arr) => `<div class="col"><span class="mono">${t}</span>${arr.map(x=>`<button data-id="${x[0]}"><b>${x[0]}</b> ${x[1]}</button>`).join('')}</div>`;
+  el.innerHTML = `<div class="trace">${col('Requirement',R)}${col('Desain',D)}${col('Test',T)}<svg></svg></div><div class="panel" aria-live="polite">Klik item mana pun. Requirement ditelusuri ke depan (forward), test ditelusuri ke belakang (backward).</div>`;
+  const tr = $('.trace', el), svg = $('svg', tr);
+  const by = id => $(`[data-id="${id}"]`, tr);
+  const drawLines = () => {
+    const box = tr.getBoundingClientRect();
+    svg.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`);
+    svg.innerHTML = L.map(([a,b])=>{ const A=by(a).getBoundingClientRect(), B=by(b).getBoundingClientRect(); const x1=A.right-box.left, y1=A.top+A.height/2-box.top, x2=B.left-box.left, y2=B.top+B.height/2-box.top, m=(x1+x2)/2; return `<path data-l="${a}-${b}" d="M${x1},${y1} C${m},${y1} ${m},${y2} ${x2},${y2}"/>`; }).join('');
+  };
+  const linked = id => L.filter(l=>l.includes(id));
+  ['R4','T6'].forEach(g=>by(g).classList.add('gap'));
+  const chain = (id, dir) => { const out=new Set([id]), edges=new Set(); let front=[id]; while(front.length){ const nx=[]; front.forEach(f=>L.forEach(([a,b])=>{ if(dir>0&&a===f&&!out.has(b)){out.add(b);edges.add(a+'-'+b);nx.push(b);} if(dir<0&&b===f&&!out.has(a)){out.add(a);edges.add(a+'-'+b);nx.push(a);} })); front=nx; } return [out,edges]; };
+  tr.addEventListener('click', e => {
+    const b = e.target.closest('button'); if(!b) return; const id = b.dataset.id;
+    let nodes, edges, msg;
+    if(id[0]==='R'){ [nodes,edges]=chain(id,1); msg = nodes.size===1 ? `<b>Forward trace ${id}: gap!</b> Requirement ini tidak punya desain maupun test. Ada kebutuhan yang belum dikerjakan.` : `<b>Forward trace ${id}</b>: ${[...nodes].join(' → ')}. Setiap input fase punya output.`; }
+    else if(id[0]==='T'){ [nodes,edges]=chain(id,-1); msg = nodes.size===1 ? `<b>Backward trace ${id}: gap!</b> Test ini tidak berasal dari requirement mana pun. Fitur ini dari mana?` : `<b>Backward trace ${id}</b>: ${[...nodes].reverse().join(' → ')}. Output bisa dilacak ke inputnya.`; }
+    else { const [n1,e1]=chain(id,1), [n2,e2]=chain(id,-1); nodes=new Set([...n1,...n2]); edges=new Set([...e1,...e2]); msg = `<b>${id}</b> dilacak dua arah: ${[...nodes].join(', ')}.`; }
+    tr.classList.add('focus');
+    $$('button', tr).forEach(x=>x.classList.toggle('on', nodes.has(x.dataset.id)));
+    $$('path', svg).forEach(p=>p.classList.toggle('on', edges.has(p.dataset.l)));
+    $('.panel', el).innerHTML = msg;
+  });
+  requestAnimationFrame(drawLines);
+  const ro = new ResizeObserver(()=>{ if(el.isConnected) drawLines(); }); ro.observe(tr);
+}
+};
+
+/* =================== CONTENT =================== */
+const WEEKS = [
+{ id:'w1', n:1, title:'Pendahuluan SQA', tag:'Introduction', short:'Definisi kualitas, tujuan SQA, error–fault–failure, dan 9 penyebab error.',
+  lede:'Apa itu software, kualitas, dan SQA. Kenapa software bisa gagal, dan dari mana sumber kesalahannya.',
+  concept:`
+  <div class="blk"><h3>Definisi kunci</h3>
+    <p class="term"><b>Software (IEEE)</b>: program komputer, prosedur, dokumentasi, dan data yang berkaitan dengan operasi sistem komputer.</p>
+    <p class="term"><b>Quality</b>: <i>conformance to requirements</i> (Crosby, 1979).</p>
+    <p class="term"><b>Software quality (IEEE)</b>: (1) sejauh mana sistem memenuhi requirement yang ditentukan, dan (2) sejauh mana sistem memenuhi kebutuhan atau ekspektasi user.</p></div>
+  <div class="blk"><h3>SQA: IEEE vs Galin</h3>
+    <p><b>IEEE</b>: pola tindakan yang terencana dan sistematis untuk memberi keyakinan memadai bahwa software sesuai requirement fungsional.</p>
+    <p><b>Definisi diperluas</b> menambahkan dua hal:</p>
+    <ul><li>SQA tidak terbatas pada development; <b>maintenance</b> juga termasuk.</li><li>SQA tidak hanya teknis; <b>jadwal dan anggaran</b> juga diperhatikan.</li></ul>
+    <p>Kepuasan user = produk sesuai + kualitas baik + tepat anggaran dan jadwal.</p></div>
+  <div class="blk"><h3>Tujuan SQA</h3>
+    <ol><li>Keyakinan bahwa software sesuai requirement teknis fungsional.</li><li>Keyakinan bahwa software sesuai jadwal dan anggaran.</li><li>Memulai dan mengelola perbaikan efisiensi aktivitas pengembangan atau maintenance dan SQA.</li></ol>
+    <p style="color:var(--muted);font-size:.92rem">Berlaku untuk fase development (berorientasi proses) dan maintenance (berorientasi produk).</p></div>
+  <div class="blk"><h3>9 penyebab software error</h3>
+    <ol><li>Coding errors</li><li>Logical design errors</li><li>Faulty requirements definition</li><li>Kegagalan komunikasi klien–developer</li><li>Deviasi yang disengaja dari requirement</li><li>Tidak mematuhi standar dokumentasi dan coding</li><li>Kekurangan proses testing</li><li>Procedure errors</li><li>Documentation errors</li></ol>
+    <p style="color:var(--muted);font-size:.92rem">Semua penyebabnya adalah manusia.</p></div>
+  <div class="blk wide"><h3>QA vs QC dan model kematangan</h3>
+    <div class="tbl-wrap"><table><thead><tr><th>SQA</th><th>Software Testing (QC)</th></tr></thead><tbody>
+    <tr><td>Fokus proses</td><td>Fokus produk</td></tr><tr><td>Preventif, proaktif</td><td>Korektif, reaktif</td></tr><tr><td>Audit, training, definisi proses</td><td>Review, testing, inspeksi</td></tr><tr><td>Berlaku untuk semua produk organisasi</td><td>Berlaku untuk produk yang sedang diuji</td></tr></tbody></table></div>
+    <p><b>CMMI</b>: Initial → Repeatable → Defined → Managed → Optimizing. <b>TMM</b>: Initial → Definition → Integration → Management &amp; Measurement → Optimization.</p></div>`,
+  labs:[['eff','Error → Fault → Failure','Jalankan fungsi dengan umur berbeda dan lihat kapan cacat di kode berubah menjadi kegagalan.'],['pdca','Siklus PDCA (Deming)','Siklus yang dipakai QA untuk memperbaiki proses secara berkala.'],['qaqc','Pilah: QA atau QC?','Tentukan apakah tiap aktivitas termasuk QA (proses) atau QC (produk).']],
+  quiz:[
+    {q:'Menurut IEEE, software mencakup…', o:['Hanya kode program','Program, prosedur, dokumentasi, dan data','Program dan hardware','Kode program dan test case'], a:1, e:'IEEE: computer programs, procedures, documentation and data pertaining to the operation of a computer system.'},
+    {q:'Kapan sebuah fault berubah menjadi failure?', o:['Saat programmer menulis kode yang salah','Saat kode dikompilasi','Saat bagian software yang cacat dijalankan oleh user','Saat dokumentasi tidak lengkap'], a:2, e:'Fault menjadi failure hanya ketika "diaktivasi", yaitu saat user memakai bagian software yang cacat.'},
+    {q:'Apa yang ditambahkan definisi SQA yang diperluas dibanding definisi IEEE?', o:['Fokus hanya pada kode','Proses maintenance serta jadwal dan anggaran','Hanya pengujian otomatis','Sertifikasi ISO wajib'], a:1, e:'SQA tidak terbatas pada development dan juga mencakup aspek manajerial: jadwal dan anggaran.'},
+    {q:'Mana yang termasuk aktivitas QA, bukan QC?', o:['Testing','Inspection','Quality audit','Walkthrough'], a:2, e:'Audit memeriksa proses (preventif). Testing, inspeksi, dan walkthrough memeriksa produk.'},
+    {q:'Level CMMI di mana proses dikendalikan memakai metrik proses adalah…', o:['Repeatable','Defined','Managed','Optimizing'], a:2, e:'Level 4 Managed: perbaikan dan prediksi proses secara kuantitatif dengan metrik.'},
+    {q:'Developer memotong sebagian fungsi karena tekanan deadline. Ini termasuk penyebab error…', o:['Coding errors','Deliberate deviations from software requirements','Procedure errors','Documentation errors'], a:1, e:'Termasuk deviasi yang disengaja, sama seperti reuse modul tanpa analisis atau "perbaikan" tanpa persetujuan klien.'}
+  ]},
+{ id:'w2', n:2, title:'Software Quality Model & Metric', tag:'Quality Model', short:'McCall, Boehm, ISO 9126, FURPS, CMMI, Six Sigma, metrik Halstead.',
+  lede:'Cara mendefinisikan kualitas dengan model, lalu mengukurnya dengan metrik.',
+  concept:`
+  <div class="blk"><h3>Dua kelompok model</h3>
+    <p><b>Product-based</b> menilai kualitas dari produk jadinya: McCall, Boehm, ISO 9126 / ISO 25010, FURPS, Dromey.</p>
+    <p><b>Process-based</b> menilai dari kematangan proses pengembangan: CMMI, ISO 9001, Lean Six Sigma.</p></div>
+  <div class="blk"><h3>McCall (1977)</h3>
+    <p>11 faktor dan 23 kriteria. Hierarkinya: <b>Factor</b> (sudut pandang user, untuk <i>specify</i>) → <b>Criteria</b> (sudut pandang developer, untuk <i>build</i>) → <b>Metric</b> (untuk <i>control</i>).</p>
+    <p>Hubungan antar-faktor bisa <b>indifferent</b>, <b>complementary</b> (flexibility ↔ maintainability), atau <b>conflicting</b> (portability ↔ efficiency).</p></div>
+  <div class="blk"><h3>Model lain</h3>
+    <ul><li><b>Boehm (1978)</b>: Primary uses → Intermediate constructs → Primitive constructs.</li><li><b>ISO 9126</b>: Functionality, Reliability, Usability, Efficiency, Maintainability, Portability. Penerusnya <b>ISO 25010</b>.</li><li><b>FURPS</b> (Grady): Functionality, Usability, Reliability, Performance, Supportability.</li><li><b>Lean Six Sigma</b>: mengurangi variasi proses dengan siklus DMAIC (Define, Measure, Analyze, Improve, Control).</li></ul></div>
+  <div class="blk"><h3>Measure vs metric</h3>
+    <p><b>Measure</b>: indikasi kuantitatif, misalnya jumlah error. <b>Metric</b>: derajat suatu atribut, misalnya error per person-hour.</p>
+    <p>Tiga jenis metrik: <b>product</b> (ukuran, kompleksitas), <b>process</b> (efektivitas defect removal), dan <b>project</b> (biaya, jadwal, produktivitas).</p></div>
+  <div class="blk wide"><h3>Rumus penting</h3>
+    <div class="formula">Integrity          = Σ [1 − threat × (1 − security)]
+Specificity (req)  Q = n_ui / n_r
+Design (Card&Glass) S(i) = fout(i)²   D(i) = v(i)/[fout(i)+1]   C(i) = S(i) + D(i)
+Halstead           N = N1 + N2   V = N·log2(n1+n2)   D = (n1/2)·(N2/n2)   E = D·V   T = E/18
+Maintenance        SMI = [MT − (Fc + Fa + Fd)] / MT</div></div>`,
+  labs:[['mccall','Segitiga McCall','Klik sisi segitiga untuk melihat kelompok faktor, lalu klik faktor untuk melihat kriterianya.'],['halstead','Kalkulator Halstead','Hitung length, volume, difficulty, effort, dan waktu dari jumlah operator dan operand.'],['cmmi','Tangga CMMI','Naiki 5 level kematangan proses organisasi.']],
+  quiz:[
+    {q:'Faktor McCall yang termasuk kategori Product Revision adalah…', o:['Correctness, Reliability, Efficiency','Maintainability, Flexibility, Testability','Portability, Reusability, Interoperability','Integrity, Usability, Efficiency'], a:1, e:'Product Revision berkaitan dengan kemudahan mengubah software: maintainability, flexibility, testability.'},
+    {q:'Hubungan antara portability dan efficiency menurut McCall adalah…', o:['Indifferent','Complementary','Conflicting','Identik'], a:2, e:'Meningkatkan portability cenderung menurunkan efficiency, jadi hubungannya conflicting (korelasi negatif).'},
+    {q:'Mana yang termasuk model kualitas berbasis proses?', o:['McCall','Boehm','ISO 9126','CMMI'], a:3, e:'CMMI mengukur kematangan proses pengembangan. Tiga lainnya berbasis produk.'},
+    {q:'Jika N1 = 21 dan N2 = 17, berapa program length N (Halstead)?', o:['17','21','38','155'], a:2, e:'N = N1 + N2 = 21 + 17 = 38.'},
+    {q:'Threat = 0,2 dan security = 0,9. Berapa integrity untuk satu jenis serangan?', o:['0,18','0,72','0,98','1,10'], a:2, e:'1 − 0,2 × (1 − 0,9) = 1 − 0,02 = 0,98.'},
+    {q:'MT = 100 modul, Fc = 10, Fa = 5, Fd = 5. Berapa SMI?', o:['0,80','0,85','0,90','0,20'], a:0, e:'SMI = [100 − (10 + 5 + 5)] / 100 = 0,80.'}
+  ]},
+{ id:'w3', n:3, title:'Komponen SQA & Contract Review', tag:'SQA Component', short:'Enam kelas komponen SQA, peran organisasi, dan dua tahap contract review.',
+  lede:'Sistem SQA terdiri dari enam kelas komponen. Yang paling awal bekerja adalah contract review, bahkan sebelum proyek dimulai.',
+  concept:`
+  <div class="blk"><h3>6 kelas komponen SQA (Galin)</h3>
+    <ol><li>Pre-project</li><li>Project life cycle</li><li>Infrastructure: pencegahan error dan perbaikan</li><li>Software quality management</li><li>Standardization, certification &amp; SQA assessment</li><li>Organizing for SQA (komponen manusia)</li></ol></div>
+  <div class="blk"><h3>Dua jenis standar</h3>
+    <p><b>Quality management standards</b> menjawab "apa" yang harus dicapai dan membiarkan organisasi memilih caranya. Contoh: SEI CMM, ISO 9001, ISO 9000-3.</p>
+    <p><b>Project process standards</b> menjawab "bagaimana" melakukannya. Contoh: IEEE 1012, ISO/IEC 12207.</p></div>
+  <div class="blk"><h3>Organisasi SQA</h3>
+    <ul><li><b>Manajemen</b>: menetapkan kebijakan mutu, menyediakan sumber daya dan staf, serta menindaklanjuti kepatuhan.</li><li><b>SQA unit</b>: satu-satunya bagian yang full-time. Tugasnya program mutu tahunan, konsultasi, audit internal, memimpin komite, dan memelihara infrastruktur.</li><li><b>Trustees, committees, forums</b>: anggota paruh waktu atau sukarela.</li></ul></div>
+  <div class="blk"><h3>Contract review</h3>
+    <p>Proposal yang asal-asalan atau kontrak yang tidak dipahami bisa menyebabkan kerugian finansial besar. Contract review diwajibkan oleh ISO 9001.</p>
+    <p><b>Faktor yang menentukan besar upaya review</b>: besar proyek, kompleksitas teknis, pengalaman staf, dan kompleksitas organisasi.</p>
+    <p><b>Pelaksana</b>: ketua tim proposal, anggota tim, orang di luar tim, atau tim ahli eksternal.</p></div>
+  <div class="blk wide"><h3>Proyek besar &amp; proyek internal</h3>
+    <p>Untuk proyek besar, review perlu dijadwalkan, dikerjakan oleh tim, dan dipimpin seorang ketua. Proyek internal (dikerjakan untuk unit lain di organisasi yang sama) tetap butuh proposal, review, dan kesepakatan formal. Tanpa itu, requirement tidak jelas, estimasi buruk, dan risiko tidak disadari.</p></div>`,
+  labs:[['components','Peta 6 kelas komponen SQA','Klik kelas komponen untuk melihat isinya dan fase siklus hidup tempat ia berperan.'],['contract','Simulasi contract review','Centang semua objektif untuk membuka gerbang tiap tahap.']],
+  quiz:[
+    {q:'Contract review termasuk kelas komponen SQA…', o:['Project life cycle','Pre-project','Infrastructure','Quality management'], a:1, e:'Contract review, development plan, dan quality plan adalah komponen pra-proyek.'},
+    {q:'Dua tahap contract review adalah…', o:['Design review dan code review','Proposal draft review dan contract draft review','Planning dan follow-up','Audit fisik dan audit fungsional'], a:1, e:'Review draft proposal sebelum dikirim, lalu review draft kontrak sebelum ditandatangani.'},
+    {q:'Configuration management dan document control termasuk kelas…', o:['Infrastructure: pencegahan error dan perbaikan','Pre-project','Organizing for SQA','Standardization'], a:0, e:'Keduanya bagian dari komponen infrastruktur bersama prosedur, template, training, dan tindakan preventif/korektif.'},
+    {q:'Standar yang memberi panduan metodologis "bagaimana" melakukannya, misalnya IEEE 1012, disebut…', o:['Quality management standard','Project process standard','Certification standard','Internal policy'], a:1, e:'Project process standards fokus pada cara. Quality management standards fokus pada apa yang harus dicapai.'},
+    {q:'Bagian organisasi yang bekerja full-time untuk urusan SQA adalah…', o:['SQA trustees','SQA forums','SQA unit','Top management'], a:2, e:'SQA unit adalah satu-satunya bagian dari organizational base yang full-time menangani SQA.'},
+    {q:'Mana yang BUKAN objektif proposal draft review?', o:['Requirement pelanggan sudah diklarifikasi','Risiko pengembangan teridentifikasi','Menulis kode modul inti','Estimasi sumber daya dan jadwal memadai'], a:2, e:'Menulis kode bukan bagian dari review proposal.'}
+  ]},
+{ id:'w4', n:4, title:'Verifikasi, Validasi & Review', tag:'SQA Process', short:'V&V, pemain dalam review, walkthrough, inspection, FTR, QA vs QC.',
+  lede:'Verifikasi bertanya "membangun dengan benar?", validasi bertanya "membangun hal yang benar?". Review adalah filter paling murah untuk menangkap kesalahan lebih awal.',
+  concept:`
+  <div class="blk wide"><div class="tbl-wrap"><table><thead><tr><th>Parameter</th><th>Verification</th><th>Validation</th></tr></thead><tbody>
+    <tr><td>Pertanyaan</td><td>Are we building the product right?</td><td>Are we building the right product?</td></tr>
+    <tr><td>Jenis</td><td>Static testing, tanpa eksekusi kode</td><td>Dynamic testing, kode dijalankan</td></tr>
+    <tr><td>Metode</td><td>Review, walkthrough, inspection, desk-checking</td><td>Black box, white box, non-functional testing</td></tr>
+    <tr><td>Target</td><td>Arsitektur, desain, database, dokumen</td><td>Produk software sebenarnya</td></tr>
+    <tr><td>Tim &amp; urutan</td><td>Tim QA, dilakukan lebih dulu</td><td>Tim testing bersama QA, dilakukan sesudahnya</td></tr></tbody></table></div></div>
+  <div class="blk"><h3>Kenapa review penting</h3>
+    <p>Error yang ditemukan lebih awal lebih murah diperbaiki, dan review mengurangi rework di akhir proyek.</p>
+    <p><b>Langkah</b>: planning, preparation, menyusun rapat, mencatat error, koreksi (di luar rapat), verifikasi koreksi.</p>
+    <p><b>Laporan review</b>: jenis review, tim, waktu, item, agenda, checklist, komentar, aksi (no action / fix / reconsider), dan keputusan.</p></div>
+  <div class="blk"><h3>Walkthrough, inspection, FTR</h3>
+    <p><b>Walkthrough</b>: 4–6 orang, dipimpin SQA. Tujuannya menemukan dan mencatat fault, bukan memperbaikinya. Bisa <i>participant-driven</i> atau <i>document-driven</i>.</p>
+    <p><b>Inspection</b>: lebih formal, 5 langkah (lihat lab).</p>
+    <p><b>FTR</b>: kelas review yang mencakup walkthrough dan inspection. Fokus pada bagian kecil produk. Hasilnya <b>accept</b>, <b>reject</b> (review ulang), atau <b>accept provisionally</b> (perbaiki error minor tanpa review ulang).</p></div>
+  <div class="blk wide"><h3>QA vs QC</h3><p>QA itu preventif dan fokus pada proses. Sifatnya statis (review dokumen), termasuk wilayah verifikasi, dan menjadi tanggung jawab seluruh tim SDLC. QC itu korektif dan fokus pada produk. Sifatnya dinamis (testing), termasuk wilayah validasi, dan menjadi tanggung jawab tim testing (STLC).</p></div>`,
+  labs:[['vv','Pilah: verifikasi atau validasi?','Tentukan apakah aktivitas memeriksa dokumen/kode (statis) atau menjalankan produk (dinamis).'],['roles','Meja review','Kenali tujuh pemain dalam sebuah review.'],['inspection','Alur inspection','Ikuti lima langkah inspeksi formal.']],
+  quiz:[
+    {q:'"Are we building the product right?" adalah pertanyaan untuk…', o:['Validation','Verification','Quality control','Acceptance'], a:1, e:'Verification memastikan produk dibangun sesuai spesifikasi.'},
+    {q:'Ciri utama validation adalah…', o:['Tidak menjalankan kode','Hanya memeriksa dokumen','Menjalankan kode atau produk','Dilakukan sebelum verifikasi'], a:2, e:'Validation adalah dynamic testing: unit, integration, system, dan UAT.'},
+    {q:'Tujuan walkthrough adalah…', o:['Memperbaiki semua fault saat rapat','Menemukan dan mencatat fault, bukan memperbaikinya','Menilai kinerja programmer','Menjalankan test otomatis'], a:1, e:'Perbaikan dilakukan di luar rapat. Walkthrough fokus menemukan dan mencatat.'},
+    {q:'Urutan langkah inspection yang benar adalah…', o:['Preparation → Overview → Rework → Inspection → Follow-up','Overview → Preparation → Inspection → Rework → Follow-up','Inspection → Overview → Follow-up → Rework → Preparation','Overview → Inspection → Preparation → Follow-up → Rework'], a:1, e:'Overview, Preparation, Inspection meeting, Rework, lalu Follow-up oleh moderator.'},
+    {q:'Ditemukan error minor yang harus diperbaiki tanpa review ulang. Keputusan FTR-nya…', o:['Accept tanpa modifikasi','Reject','Accept provisionally','Escalate'], a:2, e:'Accept provisionally: error minor diperbaiki, tidak perlu review tambahan.'},
+    {q:'Aktivitas QC menjadi tanggung jawab…', o:['Seluruh tim SDLC','Tim testing (STLC)','Pelanggan','Manajemen puncak saja'], a:1, e:'QC dilakukan tim testing. QA menjadi tanggung jawab seluruh tim SDLC.'}
+  ]},
+{ id:'w5', n:5, title:'Product QA & Software Metric', tag:'Product Assurance', short:'Direct vs indirect measure, Halstead, cyclomatic complexity, metrik OO.',
+  lede:'Untuk menilai kualitas produk, ukurannya harus jelas. Minggu ini membahas metrik ukuran, kompleksitas, dan desain berorientasi objek.',
+  concept:`
+  <div class="blk"><h3>Product QA</h3>
+    <p>Topik di slide: evaluasi kualitas produk, proses perbaikan (<b>corrective action</b> untuk memperbaiki masalah yang sudah terjadi, <b>preventive action</b> untuk mencegahnya), aktivitas product assurance, dan metrik kualitas produk.</p>
+    <p><b>Alasan mengukur</b>: menilai, memprediksi, dan meningkatkan kualitas; estimasi biaya dan jadwal; melihat tren produktivitas.</p></div>
+  <div class="blk"><h3>Jenis ukuran</h3>
+    <p><b>Direct</b> (atribut internal): biaya, effort, LOC, kecepatan, memori.</p>
+    <p><b>Indirect</b> (atribut eksternal): fungsionalitas, kualitas, kompleksitas, reliability, maintainability.</p>
+    <p><b>Size-oriented</b>: errors/KLOC, defects/KLOC, cost/LOC. Mudah dihitung tetapi bergantung pada bahasa dan programmer.</p></div>
+  <div class="blk"><h3>Cyclomatic complexity (McCabe)</h3>
+    <div class="formula">V(G) = E − N + 2
+V(G) = P + 1        (P = predicate node)
+V(G) = R            (jumlah region)</div>
+    <p>Menyatakan jumlah jalur independen. Nilai sebaiknya <b>tidak lebih dari 10</b>; di atas itu, testing menjadi sangat sulit.</p></div>
+  <div class="blk"><h3>Metrik OO (Chidamber &amp; Kemerer)</h3>
+    <ul><li><b>WMC</b>: jumlah kompleksitas semua method dalam class.</li><li><b>DIT</b>: kedalaman pohon pewarisan sampai root.</li><li><b>NOC</b>: jumlah subclass langsung.</li><li><b>CBO</b>: jumlah class lain yang direferensikan. Fan-out tinggi tidak diinginkan.</li><li><b>RFC</b>: jumlah method yang bisa dipanggil sebagai respons atas sebuah pesan.</li><li><b>LCOM</b>: |P| − |Q| bila P &gt; Q, selain itu 0.</li></ul></div>
+  <div class="blk wide"><h3>Metrik lain</h3><p><b>McClure</b>: C + V (jumlah perbandingan + variabel kontrol). <b>Desain</b>: fan-in, fan-out, coupling Mc = k/m. <b>Tools</b>: McCabe ToolSet, CCCC, JMetric, GEN++.</p></div>`,
+  labs:[['basis','Flow graph & jalur independen','Contoh dari materi: dua loop bersarang. Jalankan keempat basis path dan lihat edge baru yang ditambahkan tiap jalur.'],['lcom','Playground LCOM','Ubah variabel yang dipakai tiap method, lalu lihat perubahan nilai kohesinya.']],
+  quiz:[
+    {q:'Flow graph punya 9 edge dan 7 node. Berapa V(G)?', o:['2','3','4','16'], a:2, e:'V(G) = E − N + 2 = 9 − 7 + 2 = 4.'},
+    {q:'Nilai cyclomatic complexity yang disarankan maksimal…', o:['5','10','20','50'], a:1, e:'Data eksperimen menunjukkan V(G) sebaiknya tidak lebih dari 10.'},
+    {q:'Mana yang termasuk direct measure?', o:['Reliability','Maintainability','Lines of code','Kualitas'], a:2, e:'LOC, biaya, effort, kecepatan, dan memori adalah direct measure.'},
+    {q:'DIT (Depth of Inheritance Tree) mengukur…', o:['Jumlah subclass langsung','Panjang maksimum dari class ke root','Jumlah method per class','Jumlah class yang direferensikan'], a:1, e:'Pohon pewarisan yang dalam berarti desain lebih kompleks dan perilaku lebih sulit diprediksi.'},
+    {q:'Rumus Halstead Effort adalah…', o:['E = N1 + N2','E = D × V','E = V / D','E = n1 log2 n1'], a:1, e:'Effort = Difficulty × Volume.'},
+    {q:'Nilai CBO yang tinggi menunjukkan…', o:['Reuse tinggi dan desain baik','Coupling tinggi yang tidak diinginkan','Kohesi tinggi','Pewarisan dangkal'], a:1, e:'Fan-out tinggi berarti class sangat bergantung pada class lain, dan reuse menurun.'}
+  ]},
+{ id:'w6', n:6, title:'Software Testing: White Box & Black Box', tag:'SW Testing', short:'Logic coverage, basis path testing, equivalence partitioning, BVA, decision table.',
+  lede:'White box menurunkan test dari struktur kode. Black box menurunkan test dari spesifikasi. Keduanya saling melengkapi.',
+  concept:`
+  <div class="blk"><h3>White box (glass box / structural)</h3>
+    <p>Test case diturunkan dari logika internal kode, tetapi hasil yang diharapkan tetap berasal dari requirement. Paling banyak dipakai di level unit dan komponen.</p>
+    <p><b>Coverage</b>: statement (node) → branch (edge) → condition → branch/condition → compound condition → path.</p></div>
+  <div class="blk"><h3>Basis path testing</h3>
+    <ol><li>Petakan kode ke control flow graph.</li><li>Hitung V(G).</li><li>Tentukan himpunan jalur independen.</li><li>Buat test case untuk setiap jalur.</li></ol>
+    <p>Bisa menangkap sekitar 60–70% bug di unit testing, tetapi tidak bisa mendeteksi fungsi yang hilang, interface error, database error, dan sebagian initialization error.</p></div>
+  <div class="blk"><h3>Black box (functional / behavioral)</h3>
+    <p>Mengabaikan mekanisme internal dan hanya melihat input dan output. Black box menemukan: fungsi yang salah atau hilang, interface error, error struktur data, error performa, dan error inisialisasi/terminasi.</p></div>
+  <div class="blk"><h3>Teknik black box</h3>
+    <ul><li><b>Equivalence partitioning</b>: input berupa range menghasilkan 1 kelas valid dan 2 invalid; input boolean atau himpunan menghasilkan 1 valid dan 1 invalid.</li><li><b>Boundary value analysis</b>: untuk [a, b], uji a−1, a, a+1, b−1, b, b+1.</li><li><b>Decision table</b>: untuk aturan bisnis yang kompleks.</li><li>Cause-effect graph, error guessing.</li></ul></div>`,
+  labs:[['whitebox','Simulator coverage white box','Pilih nilai Y dan lihat jalur yang dilalui di flow graph. Coverage bertambah dari setiap test.'],['bva','Equivalence partitioning & BVA','Garis bilangan dengan kelas valid/invalid dan titik boundary yang di-zoom.'],['dtable','Decision table','Ubah kondisi dan lihat aturan (rule) mana yang berlaku.']],
+  quiz:[
+    {q:'Input berupa range [1..999]. Menurut equivalence partitioning, kelas yang terbentuk adalah…', o:['1 valid, 1 invalid','1 valid, 2 invalid','2 valid, 1 invalid','3 valid'], a:1, e:'Satu kelas valid di dalam range, dua invalid (di bawah batas bawah dan di atas batas atas).'},
+    {q:'Range [10, 50]. Nilai uji BVA yang tepat adalah…', o:['10, 30, 50','9, 10, 11, 49, 50, 51','0, 10, 50, 100','11, 49'], a:1, e:'a−1, a, a+1, b−1, b, b+1.'},
+    {q:'Jumlah jalur independen di basis set sama dengan…', o:['Jumlah node','Jumlah edge','Cyclomatic complexity V(G)','Jumlah variabel'], a:2, e:'V(G) menyatakan jumlah jalur independen, yaitu jumlah test minimum untuk basis path testing.'},
+    {q:'Error yang bisa ditemukan black box tetapi tidak oleh basis path testing adalah…', o:['Statement yang tidak pernah dieksekusi','Fungsi yang hilang (missing function)','Loop tak berujung','Branch yang tidak ter-cover'], a:1, e:'Path testing hanya melihat kode yang ada, jadi tidak bisa menemukan fungsi yang tidak ditulis.'},
+    {q:'Branch coverage disebut juga…', o:['Node coverage','Edge coverage','Path coverage','Data coverage'], a:1, e:'Setiap branch (edge) dilalui minimal sekali.'},
+    {q:'Decision table paling cocok untuk menguji…', o:['Batas nilai input','Aturan bisnis yang kompleks','Performa sistem','Struktur loop'], a:1, e:'Decision table mencatat kombinasi kondisi dan aksi dari aturan bisnis yang kompleks.'}
+  ]},
+{ id:'w7', n:7, title:'Process Assurance Activities', tag:'Process Assurance', short:'Peran SQA group, traceability, audit, standar, jenis review, inspeksi.',
+  lede:'Aktivitas yang memastikan proses benar-benar diikuti: review, traceability, testing, audit, dan standar.',
+  concept:`
+  <div class="blk"><h3>Aktivitas SQA</h3>
+    <p>Process definition &amp; standards, formal technical reviews, analysis &amp; reporting, measurement, serta test planning &amp; review.</p>
+    <p><b>Peran tim kualitas</b>: mereview aplikasi, memberi saran teknis, membangun lingkungan mutu, menyusun standar dan guideline, serta menganalisis error pengembangan (jenis, biaya, besarnya).</p></div>
+  <div class="blk"><h3>Tugas SQA group</h3>
+    <ul><li>Menyusun <b>SQA plan</b>: evaluasi, audit, standar, prosedur pelaporan error, dan dokumen yang dihasilkan.</li><li>Ikut menyusun deskripsi proses software.</li><li>Mereview kepatuhan aktivitas terhadap proses yang ditetapkan.</li><li>Mengaudit work product.</li><li>Mencatat <b>noncompliance</b>, melaporkannya ke manajemen senior, dan memantaunya sampai selesai.</li></ul></div>
+  <div class="blk"><h3>Traceability, testing, audit</h3>
+    <p><b>Forward</b>: setiap input fase dipasangkan dengan output. <b>Backward</b>: setiap output bisa dilacak ke input.</p>
+    <p>Testing bisa memakan sekitar 50% biaya proyek, jadi lakukan walkthrough dan inspection dulu karena lebih murah.</p>
+    <p><b>Audit sebelum rilis</b>: <i>physical audit</i> memastikan semua item konfigurasi ada; <i>functional audit</i> memastikan unit, integration, dan acceptance test sudah dilakukan dan tercatat.</p></div>
+  <div class="blk"><h3>Standar &amp; review</h3>
+    <p><b>Standard</b>: kriteria baku yang disetujui. <b>Guideline</b>: lebih fleksibel dan memberi ruang untuk pertimbangan.</p>
+    <p><b>Technical review meeting</b>: 3–5 reviewer, persiapan dan rapat masing-masing kurang dari 2 jam, fokus pada bagian kecil, dan wajib ada follow-up.</p>
+    <p><b>Manfaat inspeksi</b>: produktivitas naik 30–100%, waktu proyek hemat 10–30%, biaya test turun 5–10×. Kekurangannya ada biaya awal dan prosesnya tidak sepenuhnya repeatable.</p></div>`,
+  labs:[['formality','Spektrum formalitas review','Geser dari buddy check sampai inspection dan bandingkan ciri-cirinya.'],['gilb','Proses inspeksi Gilb & Graham','Sembilan langkah inspeksi, dari Entry sampai Exit.'],['trace','Traceability matrix','Lacak requirement ke depan dan test ke belakang. Cari dua gap yang ada.']],
+  quiz:[
+    {q:'Forward traceability berarti…', o:['Setiap output bisa dilacak ke inputnya','Setiap input fase dipasangkan dengan output di fase itu','Test dijalankan dari akhir ke awal','Dokumen disimpan berurutan'], a:1, e:'Forward menunjukkan kelengkapan: tidak ada input yang tertinggal. Backward memastikan setiap output punya asal.'},
+    {q:'Physical audit sebelum rilis memeriksa bahwa…', o:['Semua item konfigurasi ada','Semua test lulus','Kode sudah di-review','Pengguna puas'], a:0, e:'Functional audit memeriksa catatan unit, integration, dan acceptance test.'},
+    {q:'Jenis review yang paling formal adalah…', o:['Buddy check','Walkthrough','Review by circulation','Inspection'], a:3, e:'Inspection punya peran jelas, pengumpulan data, dan target kuantitatif.'},
+    {q:'Rapat technical review yang ideal melibatkan…', o:['1 reviewer, tanpa batas waktu','3–5 reviewer, kurang dari 2 jam','10+ reviewer, seharian','Seluruh tim, mingguan'], a:1, e:'3–5 orang, persiapan dan rapat masing-masing kurang dari 2 jam, fokus pada bagian kecil.'},
+    {q:'Apa yang dilakukan SQA group terhadap noncompliance?', o:['Mengabaikannya bila kecil','Mencatat, melaporkan ke manajemen senior, dan memantau sampai selesai','Langsung memperbaiki kodenya','Menghapus dokumen terkait'], a:1, e:'Item noncompliance dipantau sampai terselesaikan.'},
+    {q:'Perbedaan guideline dan standard adalah…', o:['Guideline lebih wajib','Guideline memberi ruang pertimbangan dan fleksibilitas','Keduanya identik','Standard hanya untuk dokumentasi'], a:1, e:'Dorfman & Thayer: guideline mengarahkan aktivitas tetapi tetap fleksibel.'}
+  ]}
+];
+
+/* =================== QUIZ =================== */
+const key = id => 'sqa-best-' + id;
+function renderQuiz(el, w){
+  let picks = new Array(w.quiz.length).fill(null);
+  const tag = w.id.toUpperCase();
+  el.innerHTML = `<div class="runner"><div class="runner-head"><span class="mono">Test suite · ${w.title}</span><span class="mono" data-stat>0/${w.quiz.length} dijalankan</span></div>
+    ${w.quiz.map((q,i)=>`<div class="tc" data-i="${i}"><div class="tc-top"><span class="tc-id mono">TC-${tag}-${String(i+1).padStart(2,'0')}</span><span class="pill idle" data-pill>belum dijalankan</span></div><p class="tc-q">${q.q}</p><div class="opts">${q.o.map((o,j)=>`<button class="opt" data-j="${j}"><span class="mono">${'ABCD'[j]}</span><span>${o}</span></button>`).join('')}</div><p class="tc-why" hidden></p></div>`).join('')}
+    <div class="summary" hidden></div></div>`;
+  el.onclick = e => {
+    const b = e.target.closest('.opt'); if(!b || b.disabled) return;
+    const tc = b.closest('.tc'), i = +tc.dataset.i, q = w.quiz[i], j = +b.dataset.j;
+    picks[i] = j;
+    $$('.opt', tc).forEach((o,k)=>{ o.disabled = true; if(k===q.a) o.classList.add('right'); if(k===j && j!==q.a) o.classList.add('wrong'); });
+    const ok = j===q.a, p = $('[data-pill]', tc); p.className = 'pill ' + (ok?'pass':'fail'); p.textContent = ok ? 'PASS' : 'FAIL';
+    const why = $('.tc-why', tc); why.hidden = false; why.textContent = q.e;
+    const done = picks.filter(x=>x!==null).length;
+    $('[data-stat]', el).textContent = `${done}/${w.quiz.length} dijalankan`;
+    if(done === w.quiz.length) finish();
+  };
+  function finish(){
+    const score = picks.filter((p,i)=>p===w.quiz[i].a).length, n = w.quiz.length, pct = Math.round(score/n*100), pass = pct>=70;
+    const best = Math.max(store.get(key(w.id)) ?? 0, pct); store.set(key(w.id), best); refreshProgress();
+    const s = $('.summary', el); s.hidden = false;
+    s.innerHTML = `<div class="sumbar">${picks.map((p,i)=>`<i class="${p===w.quiz[i].a?'p':'f'}"></i>`).join('')}</div>
+      <div class="row"><span class="big">${score}/${n} PASS</span><span class="pill ${pass?'pass':'fail'}">${pass?'Suite lulus':'Suite gagal'} · ${pct}%</span><span class="mono" style="color:var(--muted)">Skor terbaik ${best}%</span></div>
+      <p>${pass?'Bagus. Lanjutkan ke minggu berikutnya atau ulangi untuk skor sempurna.':'Baca lagi bagian konsep dan coba lab-nya, lalu ulangi tes. Batas lulus 70%.'}</p>
+      <div class="row"><button class="btn pri" data-retry>Ulangi tes</button></div>`;
+    $('[data-retry]', s).onclick = () => { renderQuiz(el, w); el.scrollIntoView({behavior: RM?'auto':'smooth', block:'start'}); };
+  }
+}
+
+/* =================== VIEWS =================== */
+const main = $('#main'), rail = $('#rail');
+function statusOf(id){ const b = store.get(key(id)); return b==null ? null : b>=70 ? 'ok' : 'try'; }
+function refreshProgress(){
+  const st = WEEKS.map(w=>statusOf(w.id));
+  $('#suiteBar').innerHTML = st.map(s=>`<i class="${s||''}"></i>`).join('');
+  $('#suiteTxt').textContent = `${st.filter(s=>s==='ok').length}/7`;
+  WEEKS.forEach(w => { const d = $(`[data-go="${w.id}"] .dot`, rail); if(d) d.className = 'dot ' + (statusOf(w.id)||''); });
+}
+function drawRail(cur){
+  rail.innerHTML = `<span class="mono">Materi</span><button data-go="home" ${cur==='home'?'aria-current="page"':''}><span class="wk">00</span><span class="ttl">Beranda &amp; profil</span><span></span></button>` +
+    WEEKS.map(w=>`<button data-go="${w.id}" ${cur===w.id?'aria-current="page"':''}><span class="wk">W${w.n}</span><span class="ttl">${w.title}</span><span class="dot"></span></button>`).join('');
+  refreshProgress();
+  const a = $('[aria-current]', rail); if(a && window.innerWidth<=860) a.scrollIntoView({inline:'center', block:'nearest'});
+}
+function renderHome(){
+  main.innerHTML = `<div class="week">
+    <div class="hero"><p class="eyebrow">Penjaminan Mutu Perangkat Lunak · 3 SKS</p><h1>Belajar SQA lewat simulasi dan test case</h1>
+      <p class="lede">Ringkasan materi Minggu 1–7. Setiap minggu berisi konsep, lab interaktif yang bisa diklik dan dijalankan, serta test suite. Kamu lulus satu minggu kalau skornya minimal 70%.</p>
+      <div class="row"><button class="btn pri" data-go="w1">Mulai dari Minggu 1</button></div></div>
+    <section class="sec"><div class="sec-h"><h2>Materi</h2><span class="mono">7 minggu · ${WEEKS.reduce((a,w)=>a+w.labs.length,0)} lab · ${WEEKS.reduce((a,w)=>a+w.quiz.length,0)} soal</span></div>
+      <div class="cards">${WEEKS.map(w=>{ const b=store.get(key(w.id)); return `<button class="card" data-go="${w.id}"><span class="wk">MINGGU ${w.n} · ${w.tag.toUpperCase()}</span><b>${w.title}</b><p>${w.short}</p><span class="foot"><span class="pill idle">${w.labs.length} lab</span>${b==null?'<span class="pill idle">belum dites</span>':`<span class="pill ${b>=70?'pass':'warn'}">terbaik ${b}%</span>`}</span></button>`; }).join('')}</div></section>
+    <section class="sec"><div class="sec-h"><h2>Profil mata kuliah</h2><span class="mono">Minggu 0</span></div>
+      <div class="concept">
+        <div class="blk"><h3>Deskripsi</h3><p>Mempelajari tahapan pembangunan perangkat lunak agar produknya memenuhi kriteria kualitas suatu standar: konsep kualitas, model, metrik, standar, serta dasar software testing.</p><p style="color:var(--muted);font-size:.92rem">Rujukan utama: Galin, <i>Software Quality: Concept and Practice</i> (2018); Gordon, <i>Handbook of SQA</i> (2008).</p></div>
+        <div class="blk"><h3>Bobot per Sub-CLO</h3><div class="tbl-wrap"><table><thead><tr><th>Sub-CLO</th><th>Fokus</th><th style="text-align:right">Bobot</th></tr></thead><tbody>
+          <tr><td class="mono">09-03-01</td><td>Konsep SQA &amp; validasi produk</td><td style="text-align:right">20%</td></tr>
+          <tr><td class="mono">09-03-02</td><td>Rencana &amp; strategi pengujian produk</td><td style="text-align:right">25%</td></tr>
+          <tr><td class="mono">10-03-01</td><td>Konsep SQA &amp; verifikasi proses</td><td style="text-align:right">25%</td></tr>
+          <tr><td class="mono">10-03-02</td><td>Rencana &amp; pengujian proses</td><td style="text-align:right">30%</td></tr></tbody></table></div></div>
+        <div class="blk"><h3>Nilai mutu</h3><div class="tbl-wrap"><table><tbody>
+          <tr><td>A</td><td>NSM &gt; 85</td><td>BC</td><td>60 &lt; NSM ≤ 65</td></tr><tr><td>AB</td><td>75 &lt; NSM ≤ 85</td><td>C</td><td>50 &lt; NSM ≤ 60</td></tr><tr><td>B</td><td>65 &lt; NSM ≤ 75</td><td>D</td><td>40 &lt; NSM ≤ 50</td></tr><tr><td></td><td></td><td>E</td><td>NSM ≤ 40</td></tr></tbody></table></div></div>
+        <div class="blk"><h3>Remedial</h3><p>Diadakan di Minggu 15–16. Syaratnya: rata-rata CLO kurang dari 50, ikut asesmen kognitif, mengerjakan 75% kuis, dan mengumpulkan tugas.</p></div>
+      </div></section></div>`;
+}
+function renderWeek(w){
+  const i = WEEKS.indexOf(w), prev = WEEKS[i-1], next = WEEKS[i+1];
+  main.innerHTML = `<article class="week">
+    <header class="week-head"><p class="eyebrow">Minggu ${w.n} · ${w.tag}</p><h1>${w.title}</h1><p class="lede">${w.lede}</p></header>
+    <section class="sec"><div class="sec-h"><h2>Konsep</h2><span class="mono">Ringkasan materi</span></div><div class="concept">${w.concept}</div></section>
+    <section class="sec"><div class="sec-h"><h2>Lab interaktif</h2><span class="mono">${w.labs.length} simulasi</span></div><div class="benches">
+      ${w.labs.map((l,k)=>`<div class="bench" data-lab="${k}"><div class="bench-head"><span class="mono">Lab ${w.n}.${k+1}</span><h3>${l[1]}</h3><p>${l[2]}</p></div><div class="bench-body"></div></div>`).join('')}</div></section>
+    <section class="sec"><div class="sec-h"><h2>Tes interaktif</h2><span class="mono">${w.quiz.length} test case · lulus ≥ 70%</span></div><div data-quiz></div></section>
+    <nav class="pager">${prev?`<button class="btn" data-go="${prev.id}">← Minggu ${prev.n}: ${prev.title}</button>`:'<button class="btn" data-go="home">← Beranda</button>'}${next?`<button class="btn pri" data-go="${next.id}">Minggu ${next.n}: ${next.title} →</button>`:'<span></span>'}</nav>
+  </article>`;
+  w.labs.forEach((l,k) => LABS[l[0]]($(`[data-lab="${k}"] .bench-body`, main)));
+  renderQuiz($('[data-quiz]', main), w);
+}
+function route(){
+  const id = (location.hash || '#home').slice(1);
+  const w = WEEKS.find(x=>x.id===id);
+  drawRail(w ? w.id : 'home');
+  w ? renderWeek(w) : renderHome();
+  window.scrollTo(0,0);
+}
+document.addEventListener('click', e => {
+  const g = e.target.closest('[data-go]'); if(!g) return;
+  const t = g.dataset.go; if(('#'+t) === (location.hash||'#home')) { window.scrollTo(0,0); return; }
+  location.hash = t;
+});
+window.addEventListener('hashchange', route);
+route();
+</script>
+
+</body>
+</html>
